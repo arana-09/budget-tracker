@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1a3fd4"/>
+<title>Budget Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b1640;--bg2:#091230;--panel:#0f1e52;--panel2:#162468;
+  --accent:#1a3fd4;--accent2:#2347e8;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.05);
+  --text:#fff;--muted:rgba(255,255,255,0.6);--hint:rgba(255,255,255,0.32);
+  --green:#22c55e;--amber:#f59e0b;--red:#ef4444;--blue:#7b9fff;
+}
+html,body{height:100%;background:#060e28;display:flex;align-items:flex-start;justify-content:center;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.app{width:100%;max-width:1120px;background:var(--bg);border-radius:12px;overflow:hidden;color:var(--text);font-size:12px;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+
+/* TOP BAR */
+.topbar{background:var(--accent);padding:0 14px;height:40px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tlogo{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#fff;flex-shrink:0}
+.tlogo-ic{background:rgba(255,255,255,0.2);border-radius:5px;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.tpills{display:flex;gap:5px}
+.tpill{background:rgba(255,255,255,0.18);border-radius:6px;padding:3px 11px;text-align:center;min-width:68px}
+.tpill-n{font-size:12px;font-weight:500;color:#fff;display:block;line-height:1.3}
+.tpill-l{font-size:8px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.05em}
+.tsp{flex:1}
+.mnav{display:flex;align-items:center;gap:5px}
+.mbtn{background:rgba(255,255,255,0.15);border:none;border-radius:5px;color:#fff;cursor:pointer;padding:3px 13px;font-size:15px;line-height:1}
+.mbtn:hover{background:rgba(255,255,255,0.28)}
+.mbtn:disabled{opacity:.4;cursor:default}
+.mlbl{font-size:12px;font-weight:500;color:#fff;min-width:92px;text-align:center}
+
+/* BODY — single column */
+.main{padding:14px 16px;overflow-y:auto}
+
+.slbl{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;display:flex;align-items:center;gap:4px}
+
+/* WALLETS */
+.wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px}
+.wtile{background:var(--panel);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
+.wtile-acc{background:var(--accent2)}
+.wt-ic{font-size:11px;color:var(--hint)}
+.wt-nm{font-size:8px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wt-in{font-size:10px;font-weight:500;color:#fff;background:none;border:none;border-bottom:0.5px solid rgba(255,255,255,0.15);padding:1px 0;width:100%;outline:none;-moz-appearance:textfield}
+.wt-in::-webkit-outer-spin-button,.wt-in::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.sc{background:var(--panel);border-radius:7px;padding:11px 13px}
+.sc-l{font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.sc-v{font-size:17px;font-weight:500}
+.sc-s{font-size:9px;color:var(--hint);margin-top:2px}
+
+/* SPENDABLE */
+.spbox{background:var(--panel);border-radius:8px;padding:13px 14px;margin-bottom:14px;border-left:3px solid var(--accent)}
+.sprow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sp-v{font-size:22px;font-weight:500;text-align:right}
+.sp-s{font-size:10px;margin-top:2px;text-align:right}
+.spbg{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.spfill{height:100%;border-radius:3px;transition:width .4s,background .4s}
+.spft{display:flex;justify-content:space-between;font-size:9px;color:var(--hint)}
+
+/* BREAKDOWN */
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.bc{background:var(--panel);border-radius:7px;padding:11px 13px}
+.bc-t{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.brow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:0.5px solid var(--border2)}
+.brow:last-child{border-bottom:none}
+.blbl{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%}
+.btot{display:flex;justify-content:space-between;align-items:center;padding:6px 0 0;margin-top:3px;border-top:0.5px solid var(--border)}
+
+/* ADD FORM */
+.af{background:var(--panel);border-radius:8px;padding:11px 13px;margin-bottom:14px}
+.af-t{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px;display:flex;align-items:center;gap:4px}
+.fg{display:grid;grid-template-columns:86px 1fr 110px 92px 80px 90px auto;gap:6px;align-items:end}
+.fl{font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;display:block}
+.fi{background:var(--bg2);border:0.5px solid var(--border);border-radius:5px;color:#fff;padding:5px 7px;width:100%;font-size:11px}
+.fi::placeholder{color:var(--hint)}
+.fsel{background:var(--bg2);border:0.5px solid var(--border);border-radius:5px;color:#fff;padding:5px 7px;width:100%;font-size:11px}
+.fadd{background:var(--accent2);border:none;border-radius:6px;color:#fff;padding:7px 14px;font-size:11px;cursor:pointer;white-space:nowrap;height:100%}
+.fadd:hover{background:#1e3fc7}
+select option{background:#0b1640;color:#fff}
+
+/* LOG TABLES */
+.lsec{font-size:9px;font-weight:500;color:var(--hint);padding:5px 0 4px;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:5px;border-bottom:0.5px solid var(--border);margin-bottom:5px}
+.lt{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:12px}
+.lt th{font-size:9px;color:var(--hint);font-weight:400;padding:3px 5px;text-align:left;text-transform:uppercase;letter-spacing:.04em}
+.lt td{font-size:11px;color:var(--muted);padding:5px 5px;border-bottom:0.5px solid var(--border2);vertical-align:middle}
+.lt tr:last-child td{border-bottom:none}
+.lt tr:hover td{background:var(--panel2)}
+.lcarried td{color:var(--hint);font-style:italic;font-size:10px}
+.lcarried:hover td{background:none!important}
+.lpend td{opacity:.5}
+.lempty td{color:var(--hint);font-size:10px;font-style:italic;padding:9px 5px}
+.lbill td{background:rgba(239,68,68,0.06)}
+.lpill{font-size:9px;padding:1px 5px;border-radius:20px;font-weight:500;display:inline-block;white-space:nowrap;margin-left:3px;vertical-align:middle}
+.pest{background:rgba(255,255,255,0.1);color:var(--hint)}
+.prec{background:rgba(123,159,255,0.2);color:var(--blue)}
+.ppend{background:rgba(245,158,11,0.2);color:var(--amber)}
+.lcb{font-size:10px;color:var(--green);font-weight:500}
+.lei{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:100%;-moz-appearance:textfield}
+.lei::-webkit-outer-spin-button,.lei::-webkit-inner-spin-button{-webkit-appearance:none}
+.lea{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:64px;text-align:right;-moz-appearance:textfield}
+.lea::-webkit-outer-spin-button,.lea::-webkit-inner-spin-button{-webkit-appearance:none}
+.lese{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:100%}
+.libtn{background:none;border:none;cursor:pointer;color:var(--hint);padding:2px 3px;font-size:11px;border-radius:3px}
+.libtn:hover{color:var(--red);background:rgba(239,68,68,0.12)}
+.lpbtn{background:none;border:0.5px solid var(--border);border-radius:3px;cursor:pointer;color:var(--hint);padding:2px 6px;font-size:9px;line-height:1;white-space:nowrap}
+.lpbtn.on{background:rgba(245,158,11,0.2);border-color:var(--amber);color:var(--amber)}
+
+/* BOTTOM BAR */
+.btmbar{background:var(--accent);padding:0 14px;height:28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.bstat{font-size:10px;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:4px}
+.bstat strong{color:#fff;font-weight:500}
+.reset-btn{background:rgba(255,255,255,0.15);border:none;border-radius:4px;color:rgba(255,255,255,0.7);font-size:9px;padding:2px 8px;cursor:pointer}
+.reset-btn:hover{background:rgba(255,255,255,0.25);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tlogo">
+    <div class="tlogo-ic"><i class="ti ti-report-money" style="font-size:14px"></i></div>
+    Budget Tracker
+  </div>
+  <div class="tpills">
+    <div class="tpill"><span class="tpill-n" id="tp-a">$0</span><span class="tpill-l">Available</span></div>
+    <div class="tpill"><span class="tpill-n" id="tp-e">$0</span><span class="tpill-l">Expenses</span></div>
+    <div class="tpill"><span class="tpill-n" id="tp-b">$0</span><span class="tpill-l">Balance</span></div>
+  </div>
+  <div class="tsp"></div>
+  <div class="mnav">
+    <button class="mbtn" id="prev-btn" onclick="chMon(-1)">‹</button>
+    <span class="mlbl" id="mon-lbl"></span>
+    <button class="mbtn" onclick="chMon(1)">›</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="slbl"><i class="ti ti-wallet"></i>Current balances</div>
+<div class="wgrid">
+  <div class="wtile"><i class="ti ti-building-bank wt-ic"></i><span class="wt-nm">DBS</span><input class="wt-in" type="number" id="w0" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile"><i class="ti ti-cash wt-ic"></i><span class="wt-nm">Cash</span><input class="wt-in" type="number" id="w1" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev main</span><input class="wt-in" type="number" id="w2" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w2</span><input class="wt-in" type="number" id="w3" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w3</span><input class="wt-in" type="number" id="w4" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w4</span><input class="wt-in" type="number" id="w5" step="0.01" oninput="updateW()"/></div>
+  <div class="wtile wtile-acc"><i class="ti ti-sum wt-ic" style="color:rgba(255,255,255,.6)"></i><span class="wt-nm" style="color:rgba(255,255,255,.6)">Total</span><span style="font-size:11px;font-weight:500;color:#fff" id="w-tot">$0.00</span></div>
+</div>
+
+<div class="sgrid">
+  <div class="sc"><div class="sc-l">Total available</div><div class="sc-v" style="color:var(--green)" id="s-av">$0</div><div class="sc-s" id="s-sub"></div><div style="font-size:9px;color:var(--amber);margin-top:2px;display:none" id="s-pn"></div></div>
+  <div class="sc"><div class="sc-l">Expenses paid</div><div class="sc-v" style="color:var(--red)" id="s-ex">$0</div></div>
+  <div class="sc"><div class="sc-l">Closing balance</div><div class="sc-v" id="s-bl">$0</div></div>
+  <div class="sc"><div class="sc-l">Est. cashback</div><div class="sc-v" style="color:var(--green)" id="s-cb">+$0</div></div>
+</div>
+
+<div class="spbox" id="sp-wrap">
+  <div class="sprow">
+    <div>
+      <div style="font-size:11px;font-weight:500;color:var(--text)"><i class="ti ti-cash-register" style="vertical-align:-2px;margin-right:4px"></i>Spendable this month</div>
+      <div style="font-size:9px;color:var(--hint);margin-top:2px">Closing balance minus full CC bill due next month</div>
+    </div>
+    <div><div class="sp-v" id="sp-v">$0</div><div class="sp-s" id="sp-s"></div></div>
+  </div>
+  <div class="spbg"><div class="spfill" id="sp-f"></div></div>
+  <div class="spft"><span>$0</span><span id="sp-mx"></span></div>
+</div>
+
+<div class="bgrid">
+  <div class="bc">
+    <div class="bc-t"><i class="ti ti-arrow-down-circle" style="color:var(--green)"></i>Income this month</div>
+    <div id="bd-i"></div>
+    <div class="btot"><span style="font-size:10px;color:var(--muted)">Available</span><span style="font-size:13px;font-weight:500;color:var(--green)" id="bd-it">$0</span></div>
+  </div>
+  <div class="bc">
+    <div class="bc-t"><i class="ti ti-credit-card" style="color:var(--blue)"></i>Card charges <span style="font-size:8px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:3px" id="cc-nxt"></span></div>
+    <div id="bd-c"></div>
+    <div class="btot"><span style="font-size:10px;color:var(--muted)">Total</span><span style="font-size:13px;font-weight:500;color:var(--blue)" id="bd-ct">$0</span></div>
+  </div>
+  <div class="bc">
+    <div class="bc-t"><i class="ti ti-cash" style="color:var(--hint)"></i>Cash out</div>
+    <div id="bd-h"></div>
+    <div class="btot"><span style="font-size:10px;color:var(--muted)">Total</span><span style="font-size:13px;font-weight:500;color:var(--red)" id="bd-ht">$0</span></div>
+  </div>
+</div>
+
+<!-- ADD ENTRY -->
+<div class="af">
+  <div class="af-t"><i class="ti ti-plus" style="color:var(--blue)"></i>Add entry</div>
+  <div class="fg">
+    <div><span class="fl">Date</span><input type="date" id="f-dt" class="fi"/></div>
+    <div><span class="fl">Description</span><input type="text" id="f-ds" placeholder="e.g. Lunch at hawker" class="fi"/></div>
+    <div><span class="fl">Category</span>
+      <select id="f-cat" class="fsel">
+        <optgroup label="Income"><option value="salary">Salary</option><option value="reimbursement">Reimbursement</option><option value="govt">Govt payout</option></optgroup>
+        <optgroup label="Expenses"><option value="housing">Housing</option><option value="groceries">Groceries</option><option value="transport">Transport</option><option value="dining">Dining</option><option value="health">Health</option><option value="subscriptions">Subscriptions</option><option value="clothing">Clothing</option><option value="entertainment">Entertainment</option><option value="insurance">Insurance</option><option value="savings">Savings</option><option value="others">Others</option></optgroup>
+      </select>
+    </div>
+    <div><span class="fl">Payment</span><select id="f-pay" class="fsel"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
+    <div><span class="fl">Amount ($)</span><input type="number" id="f-am" placeholder="0.00" min="0" step="0.01" class="fi"/></div>
+    <div><span class="fl">Status</span><select id="f-st" class="fsel"><option value="received">Received</option><option value="pending">Pending</option></select></div>
+    <div><span class="fl">&nbsp;</span><button onclick="addEntry()" class="fadd"><i class="ti ti-plus" style="font-size:12px;vertical-align:-2px;margin-right:2px"></i>Add</button></div>
+  </div>
+</div>
+
+<!-- LOG: Income -->
+<div class="lsec"><i class="ti ti-arrow-down-circle" style="color:var(--green);font-size:12px"></i>Income</div>
+<table class="lt">
+  <thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:92px">Category</th><th style="width:84px;text-align:right">Amount</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead>
+  <tbody id="inc-body"></tbody>
+</table>
+
+<!-- LOG: Card -->
+<div class="lsec"><i class="ti ti-credit-card" style="color:var(--blue);font-size:12px"></i>Card charges <span id="cc-lbl" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0"></span></div>
+<table class="lt">
+  <thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:88px">Category</th><th style="width:78px;text-align:right">Amount</th><th style="width:60px;text-align:right">Cashback</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead>
+  <tbody id="card-body"></tbody>
+</table>
+
+<!-- LOG: Cash -->
+<div class="lsec"><i class="ti ti-cash" style="color:var(--hint);font-size:12px"></i>Cash expenses</div>
+<table class="lt">
+  <thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:88px">Category</th><th style="width:78px;text-align:right">Amount</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead>
+  <tbody id="cash-body"></tbody>
+</table>
+
+<!-- CC Bill -->
+<div id="bill-sec" style="display:none;margin-bottom:12px">
+  <div class="lsec"><i class="ti ti-receipt" style="color:var(--red);font-size:12px"></i>CC bill payment <span id="bill-lbl" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0"></span><span style="font-size:8px;color:var(--hint);font-style:italic;margin-left:4px">auto-calculated</span></div>
+  <table class="lt">
+    <thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:78px;text-align:right">Amount</th></tr></thead>
+    <tbody id="bill-body"></tbody>
+  </table>
+</div>
+
+<!-- CIMB + Samsonite -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
+  <div class="bc"><div class="bc-t"><i class="ti ti-coin" style="color:var(--green)"></i>CIMB cashback status</div><div id="cimb-bd"></div></div>
+  <div class="bc"><div class="bc-t"><i class="ti ti-luggage" style="color:var(--blue)"></i>Samsonite promo — $2,000 target</div><div id="sam-bd"></div></div>
+</div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM BAR -->
+<div class="btmbar">
+  <div class="bstat"><i class="ti ti-calendar" style="font-size:11px"></i>Period <strong id="bt-p"></strong></div>
+  <div class="bstat"><i class="ti ti-list" style="font-size:11px"></i>Entries <strong id="bt-e">0</strong></div>
+  <div class="bstat"><i class="ti ti-luggage" style="font-size:11px"></i>Samsonite <strong id="bt-s">0%</strong></div>
+  <div class="bstat"><i class="ti ti-coin" style="font-size:11px"></i>Cashback <strong id="bt-c">+$0</strong></div>
+  <button class="reset-btn" onclick="if(confirm('Reset all data to defaults?')){localStorage.clear();location.reload();}">Reset data</button>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+var ICATS = new Set(['salary','reimbursement','govt']);
+var CBR = {dining:2,subscriptions:2,entertainment:2};
+var CLBL = {salary:'Salary',reimbursement:'Reimbursement',govt:'Govt payout',housing:'Housing',groceries:'Groceries',transport:'Transport',dining:'Dining',health:'Health',subscriptions:'Subscriptions',clothing:'Clothing',entertainment:'Entertainment',insurance:'Insurance',savings:'Savings',others:'Others'};
+var MN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var STGT = 2000;
+var JO = 834.80, PRE = 483.64;
+// Month config: workdays, dinner replacements, subscriptions amount, transport rate, phone bill
+var MCFG = [
+  {wd:11, dr:2,  subs:126.47, tr:0,    ph:false}, // June
+  {wd:22, dr:0,  subs:248.78, tr:2.50, ph:true},  // July
+  {wd:20, dr:0,  subs:248.78, tr:2.50, ph:true},  // August
+];
+var W_DEFAULTS = [202.70, 4.00, 39.83, 170.53, 2.47, 415.27];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+var OFF = 0, MD = {}, NID = 1;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function r2(n){ return Math.round(n*100)/100; }
+function gk(o){ return 'M'+o; }
+function ge(){ var k=gk(OFF); if(!MD[k]) MD[k]=[]; return MD[k]; }
+function ml(o){ var m=(5+o)%12, y=2026+Math.floor((5+o)/12); return MN[m]+' '+y; }
+function mdp(o){ var m=(5+o)%12, y=2026+Math.floor((5+o)/12); return y+'-'+(m+1).toString().padStart(2,'0'); }
+function fmt(n){ return n.toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// ─── CC bill + balance ────────────────────────────────────────────────────────
+function getCC(o){
+  if(o===0) return PRE;
+  var prev=MD[gk(o-1)]||[], mc=0;
+  for(var i=0;i<prev.length;i++){ if(!prev[i].inc && prev[i].pay==='card' && !prev[i].pending) mc+=prev[i].amt; }
+  return r2((o===1?PRE:0)+mc);
+}
+function nextCC(o){ return getCC(o+1); }
+function getOpen(o){
+  if(o===0) return JO;
+  var b=JO;
+  for(var i=0;i<o;i++){
+    var en=MD[gk(i)]||[], cc=getCC(i);
+    for(var j=0;j<en.length;j++){
+      if(en[j].inc && !en[j].pending) b+=en[j].amt;
+      else if(!en[j].inc && en[j].pay==='cash' && !en[j].pending) b-=en[j].amt;
+    }
+    if(i>0) b-=cc;
+  }
+  return r2(b);
+}
+
+// ─── Seed (default data) ──────────────────────────────────────────────────────
+function mkEst(o){
+  var c=MCFG[o]||{wd:20,dr:0,subs:248.78,tr:2.50,ph:true};
+  var wd=c.wd, dr=c.dr, subs=c.subs, tr=c.tr, ph=c.ph, dd=wd-dr, pfx=mdp(o);
+  var la=r2(wd*6.30), da=r2(dd*6.67), ta=r2(wd*tr);
+  var ddesc=dr>0?'Dinner ('+dd+'d x $6.67, excl. '+dr+" Nando's)":'Dinner ('+wd+'d x $6.67)';
+  var arr=[
+    {date:pfx+'-01',desc:'Lunch ('+wd+'d x $6.30)',cat:'dining',pay:'card',amt:la,inc:false,est:true,rec:false,pending:false},
+    {date:pfx+'-01',desc:ddesc,cat:'dining',pay:'card',amt:da,inc:false,est:true,rec:false,pending:false},
+    {date:pfx+'-01',desc:'Subscriptions'+(o===0?' (partial)':''),cat:'subscriptions',pay:'card',amt:subs,inc:false,est:true,rec:false,pending:false}
+  ];
+  if(ta>0) arr.push({date:pfx+'-01',desc:'Transport ('+wd+'d x $'+tr+')',cat:'transport',pay:'cash',amt:ta,inc:false,est:true,rec:false,pending:false});
+  if(ph) arr.push({date:pfx+'-01',desc:"Parents' phone bill",cat:'others',pay:'cash',amt:76.15,inc:false,est:false,rec:true,pending:false});
+  return arr.map(function(e){ var r=(e.pay==='card'&&CBR[e.cat])?CBR[e.cat]:0; return Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0},e); });
+}
+function seedDefaults(){
+  function mk(list,key,offset){
+    var arr=mkEst(offset);
+    for(var i=0;i<list.length;i++){
+      var e=list[i], r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0;
+      arr.push(Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0,est:false,rec:false},e));
+    }
+    MD[key]=arr;
+  }
+  mk([
+    {date:'2026-06-18',desc:"Friend reimb. (Nando's 18 Jun)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},
+    {date:'2026-06-20',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:251.77,inc:true,pending:false},
+    {date:'2026-06-25',desc:"Friend reimb. (Nando's 25 Jun)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},
+    {date:'2026-06-30',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:true},
+    {date:'2026-06-18',desc:"Nando's dinner — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},
+    {date:'2026-06-18',desc:"Nando's dinner — friend's share",cat:'dining',pay:'card',amt:23,inc:false,pending:false},
+    {date:'2026-06-25',desc:"Nando's dinner — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},
+    {date:'2026-06-25',desc:"Nando's dinner — friend's share",cat:'dining',pay:'card',amt:23,inc:false,pending:false}
+  ],'M0',0);
+  mk([
+    {date:'2026-07-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},
+    {date:'2026-07-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},
+    {date:'2026-07-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false},
+    {date:'2026-07-05',desc:'Medicine bill',cat:'health',pay:'card',amt:233.40,inc:false,pending:false},
+    {date:'2026-07-10',desc:'Shopee bill',cat:'others',pay:'cash',amt:600,inc:false,pending:false},
+    {date:'2026-07-01',desc:'Insurance (1st policy)',cat:'insurance',pay:'cash',amt:125.72,inc:false,pending:false},
+    {date:'2026-07-01',desc:'Insurance (2nd policy)',cat:'insurance',pay:'cash',amt:300,inc:false,pending:false},
+    {date:'2026-07-25',desc:"Doctor's appointment",cat:'health',pay:'card',amt:63.80,inc:false,pending:false},
+    {date:'2026-07-25',desc:'Lab test',cat:'health',pay:'card',amt:346.80,inc:false,pending:false}
+  ],'M1',1);
+  mk([
+    {date:'2026-08-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},
+    {date:'2026-08-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},
+    {date:'2026-08-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false}
+  ],'M2',2);
+}
+
+// ─── localStorage persistence ─────────────────────────────────────────────────
+var LS_KEY = 'budget_tracker_v1';
+function saveState(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      OFF: OFF,
+      NID: NID,
+      MD: MD,
+      wallets: [0,1,2,3,4,5].map(function(i){ return parseFloat(document.getElementById('w'+i).value)||0; })
+    }));
+  } catch(e){ console.warn('Save failed',e); }
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    var s=JSON.parse(raw);
+    OFF=s.OFF||0;
+    NID=s.NID||1;
+    MD=s.MD||{};
+    if(s.wallets) s.wallets.forEach(function(v,i){ document.getElementById('w'+i).value=v; });
+    return true;
+  } catch(e){ return false; }
+}
+
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+function updateW(){
+  var t=0; for(var i=0;i<6;i++) t+=parseFloat(document.getElementById('w'+i).value)||0;
+  document.getElementById('w-tot').textContent='$'+fmt(t);
+  saveState();
+}
+
+// ─── Entry actions ────────────────────────────────────────────────────────────
+function togglePending(id){
+  var e=ge().find(function(x){return x.id===id;});
+  if(e){ e.pending=!e.pending; render(); saveState(); }
+}
+function deleteE(id){
+  var a=ge(), i=a.findIndex(function(x){return x.id===id;});
+  if(i>-1){ a.splice(i,1); render(); saveState(); }
+}
+function updF(id,f,v){
+  var e=ge().find(function(x){return x.id===id;});
+  if(!e) return;
+  if(f==='amt'){
+    var n=parseFloat(v); if(!isNaN(n)&&n>=0){ e.amt=n; var r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0; e.cb=r>0?r2(n*r/100):0; e.est=false; }
+  } else if(f==='cat'){
+    e.cat=v; var r=(e.pay==='card'&&!e.inc&&CBR[v])?CBR[v]:0; e.cb=r>0?r2(e.amt*r/100):0; e.est=false;
+  } else {
+    e[f]=v; if(f==='desc'||f==='date') e.est=false;
+  }
+  render(); saveState();
+}
+function chMon(d){
+  var n=OFF+d; if(n<0) return; OFF=n;
+  var l=ml(OFF);
+  document.getElementById('mon-lbl').textContent=l;
+  document.getElementById('bt-p').textContent=l;
+  document.getElementById('prev-btn').disabled=(OFF===0);
+  document.getElementById('f-dt').value=mdp(OFF)+'-01';
+  render(); saveState();
+}
+document.getElementById('f-cat').addEventListener('change',function(){
+  var ic=ICATS.has(this.value);
+  document.getElementById('f-pay').value=ic?'na':'card';
+});
+function addEntry(){
+  var dt=document.getElementById('f-dt').value, ds=document.getElementById('f-ds').value.trim();
+  var cat=document.getElementById('f-cat').value, pay=document.getElementById('f-pay').value;
+  var amt=parseFloat(document.getElementById('f-am').value), st=document.getElementById('f-st').value;
+  if(!dt||!ds||isNaN(amt)||amt<=0) return;
+  var inc=ICATS.has(cat), r=(pay==='card'&&!inc&&CBR[cat])?CBR[cat]:0;
+  ge().push({id:NID++,date:dt,desc:ds,cat:cat,pay:inc?'na':pay,amt:amt,inc:inc,pending:st==='pending',est:false,rec:false,cb:r>0?r2(amt*r/100):0});
+  document.getElementById('f-ds').value=''; document.getElementById('f-am').value='';
+  render(); saveState();
+}
+
+// ─── All-months card total (for Samsonite) ────────────────────────────────────
+function allCard(){
+  var t=PRE;
+  for(var i=0;i<=2;i++){ var en=MD[gk(i)]||[]; for(var j=0;j<en.length;j++){ if(!en[j].inc&&en[j].pay==='card'&&!en[j].pending) t+=en[j].amt; } }
+  return t;
+}
+
+// ─── Render breakdown cards ───────────────────────────────────────────────────
+function renderBD(entries,op,ccBD,totPend){
+  var im={},cm={},hm={};
+  var ck=OFF===0?'Starting balance':'From '+ml(OFF-1);
+  if(op!==0) im[ck]=op;
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];
+    if(e.inc&&!e.pending) im[e.cat]=(im[e.cat]||0)+e.amt;
+    else if(!e.inc&&e.pay==='card'&&!e.pending) cm[e.cat]=(cm[e.cat]||0)+e.amt;
+    else if(!e.inc&&e.pay==='cash'&&!e.pending) hm[e.cat]=(hm[e.cat]||0)+e.amt;
+  }
+  if(ccBD>0) hm['CC bill']=(hm['CC bill']||0)+ccBD;
+  function rI(m){
+    var ks=Object.keys(m); if(!ks.length) return '<div style="font-size:10px;color:var(--hint);padding:3px 0">No entries</div>';
+    var rest=ks.filter(function(k){return k!==ck;}).sort(function(a,b){return m[b]-m[a];});
+    return([].concat(ks.indexOf(ck)>=0?[ck]:[],rest)).map(function(k){
+      var iC=k===ck;
+      return '<div class="brow"><span class="blbl" style="'+(iC?'color:var(--hint);font-style:italic':'')+'">'+( iC?'↳ ':'')+( CLBL[k]||k)+'</span><span style="font-size:10px;font-weight:500;color:'+(iC?'var(--hint)':'var(--green)')+'">$'+fmt(m[k])+'</span></div>';
+    }).join('')+(totPend>0?'<div class="brow"><span class="blbl" style="color:var(--amber);font-style:italic">Pending</span><span style="font-size:10px;color:var(--amber)">+$'+fmt(totPend)+'</span></div>':'');
+  }
+  function rS(m,col){
+    var ks=Object.keys(m); if(!ks.length) return '<div style="font-size:10px;color:var(--hint);padding:3px 0">No entries</div>';
+    return ks.sort(function(a,b){return m[b]-m[a];}).map(function(k){
+      return '<div class="brow"><span class="blbl">'+(CLBL[k]||k)+'</span><span style="font-size:10px;font-weight:500;color:'+col+'">$'+fmt(m[k])+'</span></div>';
+    }).join('');
+  }
+  var it=Object.values(im).reduce(function(s,v){return s+v;},0);
+  var ct=Object.values(cm).reduce(function(s,v){return s+v;},0);
+  var ht=Object.values(hm).reduce(function(s,v){return s+v;},0);
+  document.getElementById('bd-i').innerHTML=rI(im);
+  document.getElementById('bd-c').innerHTML=rS(cm,'var(--blue)');
+  document.getElementById('bd-h').innerHTML=ht>0?rS(hm,'var(--red)'):'<div style="font-size:10px;color:var(--hint);padding:3px 0">No cash expenses</div>';
+  document.getElementById('bd-it').textContent='$'+fmt(it);
+  document.getElementById('bd-ct').textContent='$'+fmt(ct);
+  document.getElementById('bd-ht').textContent=ht>0?'-$'+fmt(ht):'$0.00';
+}
+
+// ─── Render spendable ─────────────────────────────────────────────────────────
+function renderSP(clos,ncc){
+  var s=r2(clos-ncc), col, st;
+  if(s<0){ col='var(--red)'; st="⚠ Can't cover CC bill ($"+fmt(ncc)+") — $"+fmt(Math.abs(s))+" short."; }
+  else if(s<200){ col='var(--amber)'; st="Very tight — $"+fmt(s)+" left after reserving $"+fmt(ncc)+"."; }
+  else if(s<500){ col='var(--amber)'; st="Watch it — $"+fmt(s)+" free after setting aside $"+fmt(ncc)+"."; }
+  else { col='var(--green)'; st="Good — $"+fmt(s)+" spendable after reserving $"+fmt(ncc)+"."; }
+  document.getElementById('sp-v').textContent=(s<0?'-$':'$')+fmt(Math.abs(s));
+  document.getElementById('sp-v').style.color=col;
+  document.getElementById('sp-s').textContent=st;
+  document.getElementById('sp-s').style.color=col;
+  document.getElementById('sp-wrap').style.borderLeftColor=col;
+  var pct=s<=0?0:Math.min(100,Math.round(s/Math.max(clos,1)*100));
+  document.getElementById('sp-f').style.width=pct+'%';
+  document.getElementById('sp-f').style.background=col;
+  document.getElementById('sp-mx').textContent='Closing $'+fmt(clos);
+}
+
+// ─── Build editable row ───────────────────────────────────────────────────────
+function mkPendBtn(id,isPending){
+  return '<button class="lpbtn'+(isPending?' on':'')+'" onclick="togglePending('+id+')">'+(isPending?'Pending':'Received')+'</button>';
+}
+function editRow(e,ac,extra){
+  var co=Object.keys(CLBL).map(function(v){ return '<option value="'+v+'"'+(v===e.cat?' selected':'')+'>'+CLBL[v]+'</option>'; }).join('');
+  var badge=(e.rec?'<span class="lpill prec">↻</span>':e.est?'<span class="lpill pest">Est.</span>':'');
+  return '<tr class="'+(e.pending?'lpend':'')+'">'+
+    '<td><input class="lei" type="date" value="'+e.date+'" onchange="updF('+e.id+',\'date\',this.value)"/></td>'+
+    '<td style="display:flex;align-items:center;gap:3px;overflow:hidden"><input class="lei" type="text" value="'+e.desc.replace(/"/g,'&quot;')+'" onchange="updF('+e.id+',\'desc\',this.value)" style="flex:1;min-width:0"/>'+badge+'</td>'+
+    '<td><select class="lese" onchange="updF('+e.id+',\'cat\',this.value)">'+co+'</select></td>'+
+    '<td style="text-align:right;color:'+ac+'"><input class="lea" type="number" value="'+e.amt+'" min="0" step="0.01" onchange="updF('+e.id+',\'amt\',this.value)"/></td>'+
+    extra+
+    '<td style="text-align:center">'+mkPendBtn(e.id,e.pending)+'</td>'+
+    '<td><button class="libtn" onclick="deleteE('+e.id+')" aria-label="Delete"><i class="ti ti-trash"></i></button></td>'+
+  '</tr>';
+}
+
+// ─── Main render ──────────────────────────────────────────────────────────────
+function render(){
+  var entries=ge();
+  var inc=entries.filter(function(e){return e.inc;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var card=entries.filter(function(e){return !e.inc&&e.pay==='card';}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var cash=entries.filter(function(e){return !e.inc&&e.pay==='cash';}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var cc=getCC(OFF), op=getOpen(OFF);
+  var nxtLbl=ml(OFF+1), prvLbl=OFF===0?'pre-existing':ml(OFF-1);
+
+  document.getElementById('cc-lbl').textContent='— billed '+nxtLbl;
+  document.getElementById('cc-nxt').textContent='billed '+nxtLbl;
+
+  // Income table
+  var cl=OFF===0?'Starting balance':'Balance from '+ml(OFF-1);
+  var ih='<tr class="lcarried"><td>—</td><td>'+cl+'</td><td>—</td><td style="text-align:right;color:var(--hint)">$'+fmt(op)+'</td><td></td><td></td></tr>';
+  for(var i=0;i<inc.length;i++) ih+=editRow(inc[i],inc[i].pending?'var(--amber)':'var(--green)','');
+  document.getElementById('inc-body').innerHTML=ih;
+
+  // Card table
+  if(card.length){
+    var ch=''; for(var i=0;i<card.length;i++){ var e=card[i]; var cb=e.cb>0?'<span class="lcb">+$'+fmt(e.cb)+'</span>':'<span style="color:var(--hint)">—</span>'; ch+=editRow(e,'var(--blue)','<td style="text-align:right">'+cb+'</td>'); }
+    document.getElementById('card-body').innerHTML=ch;
+  } else document.getElementById('card-body').innerHTML='<tr class="lempty"><td colspan="7">No card charges this month</td></tr>';
+
+  // Cash table
+  if(cash.length){
+    var hh=''; for(var i=0;i<cash.length;i++) hh+=editRow(cash[i],'var(--red)','');
+    document.getElementById('cash-body').innerHTML=hh;
+  } else document.getElementById('cash-body').innerHTML='<tr class="lempty"><td colspan="6">No cash expenses this month</td></tr>';
+
+  // CC bill
+  var bs=document.getElementById('bill-sec');
+  if(cc>0){
+    bs.style.display='block';
+    var bd;
+    if(OFF===0) bd='CC bill (pre-existing)';
+    else if(OFF===1) bd='CC bill (pre-existing $'+fmt(PRE)+' + June $'+fmt(r2(cc-PRE))+')';
+    else bd='CC bill ('+prvLbl+' charges)';
+    document.getElementById('bill-lbl').textContent=OFF===1?'— pre-existing + June':'— '+prvLbl;
+    document.getElementById('bill-body').innerHTML='<tr class="lbill"><td style="color:var(--hint)">'+mdp(OFF)+'-01</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">'+bd+'</td><td style="text-align:right;font-weight:500;color:var(--red)">−$'+fmt(cc)+'</td></tr>';
+  } else bs.style.display='none';
+
+  // Totals
+  var totR=0,totP=0,totC=0,totK=0,totCB=0;
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];
+    if(e.inc){ if(e.pending) totP+=e.amt; else totR+=e.amt; }
+    else if(e.pay==='cash'&&!e.pending) totC+=e.amt;
+    else if(e.pay==='card'&&!e.pending){ totK+=e.amt; totCB+=e.cb; }
+  }
+  var exp=OFF===0?0:totC+cc, av=r2(op+totR), clos=r2(av-exp);
+
+  document.getElementById('s-av').textContent='$'+fmt(av);
+  document.getElementById('s-sub').textContent='prev $'+fmt(op)+' + $'+fmt(totR);
+  var pnel=document.getElementById('s-pn');
+  if(totP>0){ pnel.style.display='block'; pnel.textContent='+ pending $'+fmt(totP); } else pnel.style.display='none';
+  document.getElementById('s-ex').textContent=exp>0?'-$'+fmt(exp):'$0.00';
+  var bel=document.getElementById('s-bl'); bel.textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos)); bel.style.color=clos<0?'var(--red)':clos<200?'var(--amber)':'var(--text)';
+  document.getElementById('s-cb').textContent='+$'+fmt(totCB);
+  document.getElementById('tp-a').textContent='$'+fmt(av);
+  document.getElementById('tp-e').textContent=exp>0?'-$'+fmt(exp):'$0';
+  document.getElementById('tp-b').textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos));
+
+  renderSP(clos,nextCC(OFF));
+  renderBD(entries,op,OFF===0?0:cc,totP);
+
+  // CIMB cashback
+  var cimbHtml='';
+  if(totK<500) cimbHtml='<div class="brow"><span class="blbl" style="color:var(--amber)">1% threshold</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(r2(500-totK))+' more needed</span></div>';
+  else if(totK<1000) cimbHtml='<div class="brow"><span class="blbl">1% cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">Active ✓</span></div><div class="brow"><span class="blbl" style="color:var(--amber)">2% threshold</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(r2(1000-totK))+' more</span></div>';
+  else cimbHtml='<div class="brow"><span class="blbl">2% cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">Unlocked ✓</span></div>';
+  cimbHtml+='<div class="brow"><span class="blbl">Card charges</span><span style="font-size:10px;font-weight:500;color:var(--blue)">$'+fmt(totK)+'</span></div>';
+  cimbHtml+='<div class="brow"><span class="blbl">Est. cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">+$'+fmt(totCB)+'</span></div>';
+  document.getElementById('cimb-bd').innerHTML=cimbHtml;
+
+  // Samsonite
+  var ac=allCard(), sp=Math.min(100,Math.round(ac/STGT*100)), sr=Math.max(0,STGT-ac);
+  var bc=sp>=100?'var(--green)':sp>=60?'var(--amber)':'var(--blue)';
+  var samHtml='<div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:'+sp+'%;background:'+bc+';border-radius:3px;transition:width .3s"></div></div>';
+  samHtml+='<div class="brow"><span class="blbl">Progress</span><span style="font-size:10px;font-weight:500;color:'+bc+'">'+sp+'%</span></div>';
+  samHtml+='<div class="brow"><span class="blbl">Cumulative spend</span><span style="font-size:10px;font-weight:500;color:var(--text)">$'+fmt(ac)+'</span></div>';
+  samHtml+=sr>0?'<div class="brow"><span class="blbl">Still needed</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(sr)+'</span></div>':'<div class="brow"><span class="blbl">Status</span><span style="font-size:10px;font-weight:500;color:var(--green)">Target reached! 🎉</span></div>';
+  document.getElementById('sam-bd').innerHTML=samHtml;
+
+  document.getElementById('bt-e').textContent=entries.length;
+  document.getElementById('bt-s').textContent=sp+'%';
+  document.getElementById('bt-c').textContent='+$'+fmt(totCB);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+var loaded=loadState();
+if(!loaded){
+  // First visit — seed defaults and set wallet values
+  seedDefaults();
+  W_DEFAULTS.forEach(function(v,i){ document.getElementById('w'+i).value=v; });
+  saveState();
+}
+updateW();
+var il=ml(OFF);
+document.getElementById('mon-lbl').textContent=il;
+document.getElementById('bt-p').textContent=il;
+document.getElementById('prev-btn').disabled=(OFF===0);
+document.getElementById('f-dt').value=mdp(OFF)+'-01';
+render();
+</script>
+</body>
+</html>
