@@ -2,425 +2,491 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#1a3fd4"/>
 <title>Budget Tracker</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#0b1640;--bg2:#091230;--panel:#0f1e52;--panel2:#162468;
   --accent:#1a3fd4;--accent2:#2347e8;
   --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.05);
   --text:#fff;--muted:rgba(255,255,255,0.6);--hint:rgba(255,255,255,0.32);
   --green:#22c55e;--amber:#f59e0b;--red:#ef4444;--blue:#7b9fff;
+  --sb:env(safe-area-inset-bottom,0px);
 }
-html,body{min-height:100%;background:#060e28;display:flex;align-items:flex-start;justify-content:center;padding:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-.app{width:100%;max-width:1120px;background:var(--bg);border-radius:12px;overflow:hidden;color:var(--text);font-size:12px;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+html,body{min-height:100%;background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text)}
 
-/* PIN SCREEN */
-.pin-wrap{display:flex;align-items:center;justify-content:center;min-height:420px;padding:40px 20px}
-.pin-box{background:var(--panel);border-radius:14px;padding:36px 40px;width:100%;max-width:320px;text-align:center}
-.pin-logo{background:var(--accent);border-radius:12px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.pin-title{font-size:18px;font-weight:500;color:var(--text);margin-bottom:6px}
-.pin-sub{font-size:12px;color:var(--hint);margin-bottom:28px;line-height:1.5}
-.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:24px}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:background .15s,border-color .15s}
+/* ── PIN SCREEN ── */
+#pin-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200}
+.pin-logo{background:var(--accent);border-radius:20px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.pin-title{font-size:22px;font-weight:600;margin-bottom:6px;text-align:center}
+.pin-sub{font-size:14px;color:var(--hint);text-align:center;margin-bottom:32px;line-height:1.5}
+.pin-dots{display:flex;gap:16px;justify-content:center;margin-bottom:32px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);transition:all .15s}
 .pin-dot.filled{background:var(--accent);border-color:var(--accent)}
 .pin-dot.err{background:var(--red);border-color:var(--red)}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
-.pin-key{background:var(--panel2);border:none;border-radius:10px;color:var(--text);font-size:20px;font-weight:500;padding:16px;cursor:pointer;transition:background .12s}
-.pin-key:hover{background:#1e3070}
-.pin-key:active{background:var(--accent2)}
-.pin-key.del{font-size:16px;color:var(--hint)}
-.pin-msg{font-size:11px;color:var(--red);height:16px;margin-top:4px}
-.pin-setup-note{font-size:10px;color:var(--hint);margin-top:16px;line-height:1.5}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:260px}
+.pin-key{background:var(--panel);border:none;border-radius:12px;color:var(--text);font-size:22px;font-weight:500;height:60px;cursor:pointer;transition:background .12s;display:flex;align-items:center;justify-content:center}
+.pin-key:active,.pin-key:hover{background:var(--accent2)}
+.pin-key.del{font-size:18px;color:var(--muted)}
+.pin-msg{font-size:13px;color:var(--red);text-align:center;height:20px;margin-top:14px}
+.pin-note{font-size:12px;color:var(--hint);text-align:center;margin-top:12px;line-height:1.6;max-width:260px}
 
-/* TOP BAR */
-.topbar{background:var(--accent);padding:0 14px;height:40px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.tlogo{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#fff;flex-shrink:0}
-.tlogo-ic{background:rgba(255,255,255,0.2);border-radius:5px;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
-.tpills{display:flex;gap:5px}
-.tpill{background:rgba(255,255,255,0.18);border-radius:6px;padding:3px 11px;text-align:center;min-width:68px}
-.tpill-n{font-size:12px;font-weight:500;color:#fff;display:block;line-height:1.3}
-.tpill-l{font-size:8px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.05em}
-.tsp{flex:1}
-.sync-indicator{font-size:10px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:4px}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+/* ── APP SHELL ── */
+.app{display:none;flex-direction:column;min-height:100vh}
+.app.visible{display:flex}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--accent);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.topbar-logo{background:rgba(255,255,255,0.2);border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:#fff;flex-shrink:0}
+.topbar-pills{display:flex;gap:6px;margin-left:4px}
+.tpill{background:rgba(255,255,255,0.16);border-radius:7px;padding:3px 10px;text-align:center}
+.tpill-n{font-size:12px;font-weight:600;color:#fff;display:block;line-height:1.3}
+.tpill-l{font-size:8px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:.04em}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
 .sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
 .sync-dot.err{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.mnav{display:flex;align-items:center;gap:5px;margin-left:10px}
-.mbtn{background:rgba(255,255,255,0.15);border:none;border-radius:5px;color:#fff;cursor:pointer;padding:3px 13px;font-size:15px;line-height:1}
-.mbtn:hover{background:rgba(255,255,255,0.28)}
-.mbtn:disabled{opacity:.4;cursor:default}
-.mlbl{font-size:12px;font-weight:500;color:#fff;min-width:92px;text-align:center}
-.lock-btn{background:rgba(255,255,255,0.12);border:none;border-radius:5px;color:rgba(255,255,255,0.7);font-size:10px;padding:3px 9px;cursor:pointer;margin-left:8px}
-.lock-btn:hover{background:rgba(255,255,255,0.22);color:#fff}
+.topbar-btn{background:rgba(255,255,255,0.14);border:none;border-radius:7px;color:#fff;font-size:12px;padding:5px 11px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.topbar-btn:hover{background:rgba(255,255,255,0.24)}
+.month-nav{display:flex;align-items:center;gap:6px}
+.mbtn{background:rgba(255,255,255,0.14);border:none;border-radius:7px;color:#fff;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mbtn:hover,.mbtn:active{background:rgba(255,255,255,0.28)}
+.mbtn:disabled{opacity:.3;cursor:default}
+.mlbl{font-size:13px;font-weight:500;color:#fff;min-width:96px;text-align:center}
 
-.main{padding:14px 16px;overflow-y:auto}
-.slbl{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;display:flex;align-items:center;gap:4px}
-.wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px}
-.wtile{background:var(--panel);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden}
-.wtile-acc{background:var(--accent2)}
-.wt-ic{font-size:11px;color:var(--hint)}
-.wt-nm{font-size:8px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wt-in{font-size:10px;font-weight:500;color:#fff;background:none;border:none;border-bottom:0.5px solid rgba(255,255,255,0.15);padding:1px 0;width:100%;outline:none;-moz-appearance:textfield}
-.wt-in::-webkit-outer-spin-button,.wt-in::-webkit-inner-spin-button{-webkit-appearance:none}
-.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
-.sc{background:var(--panel);border-radius:7px;padding:11px 13px}
-.sc-l{font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.sc-v{font-size:17px;font-weight:500}
-.sc-s{font-size:9px;color:var(--hint);margin-top:2px}
-.spbox{background:var(--panel);border-radius:8px;padding:13px 14px;margin-bottom:14px;border-left:3px solid var(--accent)}
-.sprow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.sp-v{font-size:22px;font-weight:500;text-align:right}
-.sp-s{font-size:10px;margin-top:2px;text-align:right}
-.spbg{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:5px}
-.spfill{height:100%;border-radius:3px;transition:width .4s,background .4s}
-.spft{display:flex;justify-content:space-between;font-size:9px;color:var(--hint)}
-.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
-.bc{background:var(--panel);border-radius:7px;padding:11px 13px}
-.bc-t{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:4px}
-.brow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:0.5px solid var(--border2)}
+/* ── LAYOUT ── */
+.layout{flex:1;display:grid;grid-template-columns:380px 1fr;gap:0;min-height:0}
+
+/* ── LEFT PANEL ── */
+.left-panel{padding:16px;overflow-y:auto;border-right:0.5px solid var(--border)}
+
+/* ── RIGHT PANEL ── */
+.right-panel{padding:16px;overflow-y:auto}
+
+/* ── CARDS ── */
+.card{background:var(--panel);border-radius:12px;padding:14px;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+
+/* ── SPENDABLE ── */
+.spendable{background:var(--panel);border-radius:12px;padding:16px;margin-bottom:12px;border-left:3px solid var(--accent)}
+.sp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.sp-amount{font-size:30px;font-weight:600}
+.sp-closing{text-align:right}
+.sp-closing-lbl{font-size:10px;color:var(--hint)}
+.sp-closing-val{font-size:18px;font-weight:500}
+.sp-msg{font-size:11px;margin-bottom:10px}
+.sp-bar{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.sp-fill{height:100%;border-radius:3px;transition:width .4s,background .4s}
+.sp-footer{display:flex;justify-content:space-between;font-size:10px;color:var(--hint)}
+
+/* ── STAT GRID ── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:var(--panel);border-radius:12px;padding:12px 14px}
+.stat-lbl{font-size:10px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.stat-val{font-size:20px;font-weight:600}
+.stat-sub{font-size:10px;color:var(--hint);margin-top:2px}
+
+/* ── BREAKDOWN ── */
+.brow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--border2)}
 .brow:last-child{border-bottom:none}
-.blbl{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%}
-.btot{display:flex;justify-content:space-between;align-items:center;padding:6px 0 0;margin-top:3px;border-top:0.5px solid var(--border)}
-.af{background:var(--panel);border-radius:8px;padding:11px 13px;margin-bottom:14px}
-.af-t{font-size:9px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px;display:flex;align-items:center;gap:4px}
-.fg{display:grid;grid-template-columns:86px 1fr 110px 92px 80px 90px auto;gap:6px;align-items:end}
-.fl{font-size:9px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;display:block}
-.fi{background:var(--bg2);border:0.5px solid var(--border);border-radius:5px;color:#fff;padding:5px 7px;width:100%;font-size:11px}
-.fi::placeholder{color:var(--hint)}
-.fsel{background:var(--bg2);border:0.5px solid var(--border);border-radius:5px;color:#fff;padding:5px 7px;width:100%;font-size:11px}
-.fadd{background:var(--accent2);border:none;border-radius:6px;color:#fff;padding:7px 14px;font-size:11px;cursor:pointer;white-space:nowrap;height:100%}
-.fadd:hover{background:#1e3fc7}
+.blbl{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%}
+.btot{display:flex;justify-content:space-between;align-items:center;padding:7px 0 0;margin-top:3px;border-top:0.5px solid var(--border)}
+
+/* ── WALLET ── */
+.wallet-row{display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border2)}
+.wallet-row:last-child{border-bottom:none}
+.wallet-icon{width:28px;height:28px;background:var(--panel2);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:13px;color:var(--muted)}
+.wallet-name{font-size:13px;color:var(--muted);flex:1}
+.wallet-input{background:none;border:none;color:var(--text);font-size:15px;font-weight:500;text-align:right;width:110px;outline:none;-moz-appearance:textfield;padding:2px 0}
+.wallet-input::-webkit-outer-spin-button,.wallet-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.wallet-total{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;margin-top:4px;border-top:0.5px solid var(--border)}
+
+/* ── ADD FORM ── */
+.form-group{margin-bottom:10px}
+.form-label{font-size:10px;color:var(--hint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;display:block}
+.form-input{background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;color:var(--text);padding:10px 12px;width:100%;font-size:13px;outline:none}
+.form-input:focus{border-color:rgba(123,159,255,0.5)}
+.form-input::placeholder{color:var(--hint)}
+.form-select{background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;color:var(--text);padding:10px 12px;width:100%;font-size:13px;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-btn{background:var(--accent2);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:500;padding:12px;width:100%;cursor:pointer;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px}
+.add-btn:hover{background:#1e3fc7}
 select option{background:#0b1640;color:#fff}
-.lsec{font-size:9px;font-weight:500;color:var(--hint);padding:5px 0 4px;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:5px;border-bottom:0.5px solid var(--border);margin-bottom:5px}
-.lt{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:12px}
-.lt th{font-size:9px;color:var(--hint);font-weight:400;padding:3px 5px;text-align:left;text-transform:uppercase;letter-spacing:.04em}
-.lt td{font-size:11px;color:var(--muted);padding:5px 5px;border-bottom:0.5px solid var(--border2);vertical-align:middle}
-.lt tr:last-child td{border-bottom:none}
-.lt tr:hover td{background:var(--panel2)}
-.lcarried td{color:var(--hint);font-style:italic;font-size:10px}
-.lcarried:hover td{background:none!important}
-.lpend td{opacity:.5}
-.lempty td{color:var(--hint);font-size:10px;font-style:italic;padding:9px 5px}
-.lbill td{background:rgba(239,68,68,0.06)}
-.lpill{font-size:9px;padding:1px 5px;border-radius:20px;font-weight:500;display:inline-block;white-space:nowrap;margin-left:3px;vertical-align:middle}
-.pest{background:rgba(255,255,255,0.1);color:var(--hint)}
-.prec{background:rgba(123,159,255,0.2);color:var(--blue)}
-.ppend{background:rgba(245,158,11,0.2);color:var(--amber)}
-.lcb{font-size:10px;color:var(--green);font-weight:500}
-.lei{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:100%;-moz-appearance:textfield}
-.lei::-webkit-outer-spin-button,.lei::-webkit-inner-spin-button{-webkit-appearance:none}
-.lea{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:64px;text-align:right;-moz-appearance:textfield}
-.lea::-webkit-outer-spin-button,.lea::-webkit-inner-spin-button{-webkit-appearance:none}
-.lese{font-size:9px;padding:2px 3px;border-radius:3px;background:var(--bg2);border:0.5px solid var(--border);color:#fff;width:100%}
-.libtn{background:none;border:none;cursor:pointer;color:var(--hint);padding:2px 3px;font-size:11px;border-radius:3px}
-.libtn:hover{color:var(--red);background:rgba(239,68,68,0.12)}
-.lpbtn{background:none;border:0.5px solid var(--border);border-radius:3px;cursor:pointer;color:var(--hint);padding:2px 6px;font-size:9px;line-height:1;white-space:nowrap}
-.lpbtn.on{background:rgba(245,158,11,0.2);border-color:var(--amber);color:var(--amber)}
-.btmbar{background:var(--accent);padding:0 14px;height:28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.bstat{font-size:10px;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:4px}
-.bstat strong{color:#fff;font-weight:500}
-.reset-btn{background:rgba(255,255,255,0.12);border:none;border-radius:4px;color:rgba(255,255,255,0.6);font-size:9px;padding:2px 8px;cursor:pointer}
-.reset-btn:hover{color:#fff;background:rgba(255,255,255,0.22)}
+
+/* ── LOG ── */
+.log-sec{font-size:10px;font-weight:500;color:var(--hint);text-transform:uppercase;letter-spacing:.07em;padding:4px 0 6px;display:flex;align-items:center;gap:5px;border-bottom:0.5px solid var(--border);margin-bottom:2px}
+.entry{display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border2);gap:10px;cursor:pointer}
+.entry:last-child{border-bottom:none}
+.entry:hover{opacity:.85}
+.entry-left{flex:1;min-width:0}
+.entry-desc{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;display:flex;align-items:center;gap:4px}
+.entry-meta{font-size:11px;color:var(--hint)}
+.entry-right{text-align:right;flex-shrink:0}
+.entry-amount{font-size:14px;font-weight:500}
+.entry-cb{font-size:10px;color:var(--green)}
+.epill{font-size:9px;padding:1px 5px;border-radius:10px;font-weight:500;display:inline-block;white-space:nowrap}
+.est{background:rgba(255,255,255,0.1);color:var(--hint)}
+.rec{background:rgba(123,159,255,0.2);color:var(--blue)}
+.pend{background:rgba(245,158,11,0.2);color:var(--amber)}
+.entry-expanded{background:var(--panel2);border-radius:10px;padding:10px 12px;margin-top:4px}
+.expand-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.expand-input{background:var(--bg2);border:0.5px solid var(--border);border-radius:7px;color:var(--text);padding:7px 10px;font-size:12px;width:100%;outline:none}
+.expand-select{background:var(--bg2);border:0.5px solid var(--border);border-radius:7px;color:var(--text);padding:7px 10px;font-size:12px;width:100%;outline:none}
+.expand-actions{display:flex;gap:6px;margin-top:6px}
+.pend-btn{background:var(--panel);border:0.5px solid var(--border);border-radius:7px;color:var(--hint);font-size:12px;padding:7px 12px;cursor:pointer;flex:1;text-align:center}
+.pend-btn.on{background:rgba(245,158,11,0.15);border-color:var(--amber);color:var(--amber)}
+.del-btn{background:rgba(239,68,68,0.1);border:0.5px solid rgba(239,68,68,0.2);border-radius:7px;color:var(--red);font-size:12px;padding:7px 14px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.del-btn:hover{background:rgba(239,68,68,0.2)}
+.carried{opacity:.45;font-style:italic;cursor:default}
+.carried:hover{opacity:.45}
+.no-entries{font-size:12px;color:var(--hint);padding:10px 0;font-style:italic}
+
+/* ── PROG BAR ── */
+.prog{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:6px 0 4px}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s}
+
+/* ── MOBILE: bottom nav ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:0.5px solid var(--border);padding-bottom:var(--sb);z-index:50}
+.nav-items{display:flex}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;color:var(--hint);gap:2px;font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+.nav-item i{font-size:22px}
+.nav-item.active{color:var(--blue)}
+
+/* ── MOBILE VIEWS ── */
+.mobile-view{display:none;padding:14px 14px 80px;overflow-y:auto}
+.mobile-view.active{display:block}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .layout{display:block}
+  .left-panel,.right-panel{display:none}
+  .bottom-nav{display:block}
+  .mobile-view.active{display:block}
+  .topbar-pills .tpill:not(:first-child){display:none}
+  .topbar-title{display:none}
+}
+@media(min-width:769px){
+  .bottom-nav{display:none!important}
+  .mobile-view{display:none!important}
+  .layout{display:grid}
+  .left-panel,.right-panel{display:block}
+  body{padding:0}
+  .app{min-height:100vh}
+}
+@media(min-width:769px) and (max-width:1100px){
+  .layout{grid-template-columns:320px 1fr}
+}
+@media(min-width:1400px){
+  .layout{grid-template-columns:420px 1fr}
+}
+
+/* CC Bill row */
+.bill-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
 </style>
 </head>
 <body>
-<div class="app" id="app">
 
 <!-- PIN SCREEN -->
 <div id="pin-screen">
-  <div class="pin-wrap">
-    <div class="pin-box">
-      <div class="pin-logo"><i class="ti ti-report-money" style="font-size:24px;color:#fff"></i></div>
-      <div class="pin-title">Budget Tracker</div>
-      <div class="pin-sub" id="pin-sub">Enter your PIN to access your data</div>
-      <div class="pin-dots" id="pin-dots">
-        <div class="pin-dot" id="d0"></div>
-        <div class="pin-dot" id="d1"></div>
-        <div class="pin-dot" id="d2"></div>
-        <div class="pin-dot" id="d3"></div>
+  <div class="pin-logo"><i class="ti ti-report-money" style="font-size:26px;color:#fff"></i></div>
+  <div class="pin-title">Budget Tracker</div>
+  <div class="pin-sub" id="pin-sub">Enter your PIN to unlock</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-grid">
+    <button class="pin-key" onclick="pk('1')">1</button><button class="pin-key" onclick="pk('2')">2</button><button class="pin-key" onclick="pk('3')">3</button>
+    <button class="pin-key" onclick="pk('4')">4</button><button class="pin-key" onclick="pk('5')">5</button><button class="pin-key" onclick="pk('6')">6</button>
+    <button class="pin-key" onclick="pk('7')">7</button><button class="pin-key" onclick="pk('8')">8</button><button class="pin-key" onclick="pk('9')">9</button>
+    <button class="pin-key" style="visibility:hidden"></button><button class="pin-key" onclick="pk('0')">0</button><button class="pin-key del" onclick="pd()"><i class="ti ti-backspace"></i></button>
+  </div>
+  <div class="pin-msg" id="pin-msg"></div>
+  <div class="pin-note" id="pin-note" style="display:none">First time? Pick a 4-digit PIN. Use the same PIN on every device to sync your data.</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo"><i class="ti ti-report-money" style="font-size:14px"></i></div>
+    <div class="topbar-title">Budget Tracker</div>
+    <div class="topbar-pills">
+      <div class="tpill"><span class="tpill-n" id="tp-a">$0</span><span class="tpill-l">Available</span></div>
+      <div class="tpill"><span class="tpill-n" id="tp-e">$0</span><span class="tpill-l">Expenses</span></div>
+      <div class="tpill"><span class="tpill-n" id="tp-b">$0</span><span class="tpill-l">Balance</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="month-nav">
+        <button class="mbtn" id="prev-btn" onclick="chMon(-1)">‹</button>
+        <span class="mlbl" id="mon-lbl"></span>
+        <button class="mbtn" onclick="chMon(1)">›</button>
       </div>
-      <div class="pin-grid">
-        <button class="pin-key" onclick="pinKey('1')">1</button>
-        <button class="pin-key" onclick="pinKey('2')">2</button>
-        <button class="pin-key" onclick="pinKey('3')">3</button>
-        <button class="pin-key" onclick="pinKey('4')">4</button>
-        <button class="pin-key" onclick="pinKey('5')">5</button>
-        <button class="pin-key" onclick="pinKey('6')">6</button>
-        <button class="pin-key" onclick="pinKey('7')">7</button>
-        <button class="pin-key" onclick="pinKey('8')">8</button>
-        <button class="pin-key" onclick="pinKey('9')">9</button>
-        <button class="pin-key" onclick="pinKey('')" style="visibility:hidden"></button>
-        <button class="pin-key" onclick="pinKey('0')">0</button>
-        <button class="pin-key del" onclick="pinDel()"><i class="ti ti-backspace"></i></button>
+      <div class="sync-dot" id="sync-dot"></div>
+      <button class="topbar-btn" onclick="lockApp()"><i class="ti ti-lock" style="font-size:13px"></i><span class="desktop-only">Lock</span></button>
+    </div>
+  </div>
+
+  <!-- DESKTOP LAYOUT -->
+  <div class="layout">
+
+    <!-- LEFT: Summary + Add -->
+    <div class="left-panel">
+
+      <!-- Spendable -->
+      <div class="spendable" id="sp-wrap">
+        <div class="sp-top">
+          <div>
+            <div style="font-size:11px;color:var(--hint);margin-bottom:2px"><i class="ti ti-cash-register" style="vertical-align:-2px;margin-right:3px"></i>Spendable this month</div>
+            <div class="sp-amount" id="sp-v">$0</div>
+          </div>
+          <div class="sp-closing">
+            <div class="sp-closing-lbl">Closing</div>
+            <div class="sp-closing-val" id="s-bl-d">$0</div>
+          </div>
+        </div>
+        <div class="sp-msg" id="sp-s-d"></div>
+        <div class="sp-bar"><div class="sp-fill" id="sp-f-d"></div></div>
+        <div class="sp-footer"><span>$0</span><span id="sp-mx-d"></span></div>
       </div>
-      <div class="pin-msg" id="pin-msg"></div>
-      <div class="pin-setup-note" id="pin-setup-note" style="display:none">
-        First time? Choose a 4-digit PIN — you'll use this on every device.
+
+      <!-- Stats -->
+      <div class="stat-row">
+        <div class="stat"><div class="stat-lbl">Available</div><div class="stat-val" style="color:var(--green)" id="s-av-d">$0</div><div class="stat-sub" id="s-sub-d"></div></div>
+        <div class="stat"><div class="stat-lbl">Expenses paid</div><div class="stat-val" style="color:var(--red)" id="s-ex-d">$0</div></div>
+      </div>
+      <div style="display:none;font-size:11px;color:var(--amber);margin:-6px 0 10px 2px" id="s-pn-d"></div>
+
+      <!-- Breakdown -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-down-circle" style="color:var(--green)"></i>Income</div>
+        <div id="bd-i-d"></div>
+        <div class="btot"><span style="font-size:11px;color:var(--muted)">Available</span><span style="font-size:14px;font-weight:600;color:var(--green)" id="bd-it-d">$0</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-credit-card" style="color:var(--blue)"></i>Card charges<span id="cc-nxt-d" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span></div>
+        <div id="bd-c-d"></div>
+        <div class="btot"><span style="font-size:11px;color:var(--muted)">Total</span><span style="font-size:14px;font-weight:600;color:var(--blue)" id="bd-ct-d">$0</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-cash" style="color:var(--hint)"></i>Cash out</div>
+        <div id="bd-h-d"></div>
+        <div class="btot"><span style="font-size:11px;color:var(--muted)">Total</span><span style="font-size:14px;font-weight:600;color:var(--red)" id="bd-ht-d">$0</span></div>
+      </div>
+
+      <!-- CC Bill -->
+      <div class="card" id="bill-card-d" style="display:none">
+        <div class="card-title"><i class="ti ti-receipt" style="color:var(--red)"></i>CC bill payment<span id="bill-lbl-d" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span><span style="font-size:9px;color:var(--hint);font-style:italic;margin-left:3px">auto</span></div>
+        <div id="bill-content-d"></div>
+      </div>
+
+      <!-- Wallets -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-wallet" style="color:var(--blue)"></i>Current balances</div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-building-bank"></i></div><span class="wallet-name">DBS Bank</span><input class="wallet-input" type="number" id="w0" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-cash"></i></div><span class="wallet-name">Cash</span><input class="wallet-input" type="number" id="w1" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut (main)</span><input class="wallet-input" type="number" id="w2" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w2</span><input class="wallet-input" type="number" id="w3" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w3</span><input class="wallet-input" type="number" id="w4" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w4</span><input class="wallet-input" type="number" id="w5" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div class="wallet-total"><span style="font-size:13px;color:var(--muted);font-weight:500">Total</span><span style="font-size:17px;font-weight:600;color:var(--green)" id="w-tot">$0.00</span></div>
+      </div>
+
+      <!-- CIMB + Sam -->
+      <div class="card"><div class="card-title"><i class="ti ti-coin" style="color:var(--green)"></i>CIMB cashback</div><div id="cimb-d"></div></div>
+      <div class="card"><div class="card-title"><i class="ti ti-luggage" style="color:var(--blue)"></i>Samsonite — $2,000 target</div><div id="sam-d"></div></div>
+
+      <button onclick="resetData()" style="background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.2);border-radius:9px;color:var(--red);font-size:12px;padding:10px;width:100%;cursor:pointer;margin-bottom:12px">Reset all data</button>
+    </div>
+
+    <!-- RIGHT: Add + Log -->
+    <div class="right-panel">
+
+      <!-- Add form (always visible on desktop) -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><i class="ti ti-plus" style="color:var(--blue)"></i>Add entry</div>
+        <div class="form-row-2" style="margin-bottom:10px">
+          <div class="form-group" style="margin-bottom:0"><span class="form-label">Date</span><input type="date" id="f-dt" class="form-input"/></div>
+          <div class="form-group" style="margin-bottom:0"><span class="form-label">Amount ($)</span><input type="number" id="f-am" placeholder="0.00" min="0" step="0.01" class="form-input" inputmode="decimal"/></div>
+        </div>
+        <div class="form-group"><span class="form-label">Description</span><input type="text" id="f-ds" placeholder="e.g. Lunch at hawker" class="form-input"/></div>
+        <div class="form-row-2" style="margin-bottom:10px">
+          <div class="form-group" style="margin-bottom:0"><span class="form-label">Category</span>
+            <select id="f-cat" class="form-select">
+              <optgroup label="Income"><option value="salary">Salary</option><option value="reimbursement">Reimbursement</option><option value="govt">Govt payout</option></optgroup>
+              <optgroup label="Expenses"><option value="housing">Housing</option><option value="groceries">Groceries</option><option value="transport">Transport</option><option value="dining">Dining</option><option value="health">Health</option><option value="subscriptions">Subscriptions</option><option value="clothing">Clothing</option><option value="entertainment">Entertainment</option><option value="insurance">Insurance</option><option value="savings">Savings</option><option value="others">Others</option></optgroup>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0"><span class="form-label">Payment</span><select id="f-pay" class="form-select"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
+        </div>
+        <div class="form-row-2">
+          <div><span class="form-label">Status</span><select id="f-st" class="form-select"><option value="received">Received</option><option value="pending">Pending</option></select></div>
+          <div style="display:flex;align-items:flex-end"><button onclick="addEntry()" class="add-btn" style="margin-top:0"><i class="ti ti-plus" style="font-size:15px"></i>Add entry</button></div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="card">
+        <div class="log-sec"><i class="ti ti-arrow-down-circle" style="color:var(--green);font-size:12px"></i>Income</div>
+        <div id="log-inc-d"></div>
+        <div class="log-sec" style="margin-top:14px"><i class="ti ti-credit-card" style="color:var(--blue);font-size:12px"></i>Card charges<span id="cc-lbl-d" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span></div>
+        <div id="log-card-d"></div>
+        <div class="log-sec" style="margin-top:14px"><i class="ti ti-cash" style="color:var(--hint);font-size:12px"></i>Cash expenses</div>
+        <div id="log-cash-d"></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- MAIN APP -->
-<div id="main-app" style="display:none;flex-direction:column">
-
-<div class="topbar">
-  <div class="tlogo">
-    <div class="tlogo-ic"><i class="ti ti-report-money" style="font-size:14px"></i></div>
-    Budget Tracker
-  </div>
-  <div class="tpills">
-    <div class="tpill"><span class="tpill-n" id="tp-a">$0</span><span class="tpill-l">Available</span></div>
-    <div class="tpill"><span class="tpill-n" id="tp-e">$0</span><span class="tpill-l">Expenses</span></div>
-    <div class="tpill"><span class="tpill-n" id="tp-b">$0</span><span class="tpill-l">Balance</span></div>
-  </div>
-  <div class="tsp"></div>
-  <div class="sync-indicator" id="sync-ind">
-    <div class="sync-dot" id="sync-dot"></div>
-    <span id="sync-lbl">Synced</span>
-  </div>
-  <div class="mnav">
-    <button class="mbtn" id="prev-btn" onclick="chMon(-1)">‹</button>
-    <span class="mlbl" id="mon-lbl"></span>
-    <button class="mbtn" onclick="chMon(1)">›</button>
-  </div>
-  <button class="lock-btn" onclick="lockApp()"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Lock</button>
-</div>
-
-<div class="main">
-<div class="slbl"><i class="ti ti-wallet"></i>Current balances</div>
-<div class="wgrid">
-  <div class="wtile"><i class="ti ti-building-bank wt-ic"></i><span class="wt-nm">DBS</span><input class="wt-in" type="number" id="w0" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile"><i class="ti ti-cash wt-ic"></i><span class="wt-nm">Cash</span><input class="wt-in" type="number" id="w1" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev main</span><input class="wt-in" type="number" id="w2" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w2</span><input class="wt-in" type="number" id="w3" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w3</span><input class="wt-in" type="number" id="w4" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile"><i class="ti ti-credit-card wt-ic"></i><span class="wt-nm">Rev w4</span><input class="wt-in" type="number" id="w5" step="0.01" oninput="updateW()"/></div>
-  <div class="wtile wtile-acc"><i class="ti ti-sum wt-ic" style="color:rgba(255,255,255,.6)"></i><span class="wt-nm" style="color:rgba(255,255,255,.6)">Total</span><span style="font-size:11px;font-weight:500;color:#fff" id="w-tot">$0.00</span></div>
-</div>
-<div class="sgrid">
-  <div class="sc"><div class="sc-l">Total available</div><div class="sc-v" style="color:var(--green)" id="s-av">$0</div><div class="sc-s" id="s-sub"></div><div style="font-size:9px;color:var(--amber);margin-top:2px;display:none" id="s-pn"></div></div>
-  <div class="sc"><div class="sc-l">Expenses paid</div><div class="sc-v" style="color:var(--red)" id="s-ex">$0</div></div>
-  <div class="sc"><div class="sc-l">Closing balance</div><div class="sc-v" id="s-bl">$0</div></div>
-  <div class="sc"><div class="sc-l">Est. cashback</div><div class="sc-v" style="color:var(--green)" id="s-cb">+$0</div></div>
-</div>
-<div class="spbox" id="sp-wrap">
-  <div class="sprow">
-    <div><div style="font-size:11px;font-weight:500;color:var(--text)"><i class="ti ti-cash-register" style="vertical-align:-2px;margin-right:4px"></i>Spendable this month</div><div style="font-size:9px;color:var(--hint);margin-top:2px">Closing balance minus full CC bill due next month</div></div>
-    <div><div class="sp-v" id="sp-v">$0</div><div class="sp-s" id="sp-s"></div></div>
-  </div>
-  <div class="spbg"><div class="spfill" id="sp-f"></div></div>
-  <div class="spft"><span>$0</span><span id="sp-mx"></span></div>
-</div>
-<div class="bgrid">
-  <div class="bc"><div class="bc-t"><i class="ti ti-arrow-down-circle" style="color:var(--green)"></i>Income this month</div><div id="bd-i"></div><div class="btot"><span style="font-size:10px;color:var(--muted)">Available</span><span style="font-size:13px;font-weight:500;color:var(--green)" id="bd-it">$0</span></div></div>
-  <div class="bc"><div class="bc-t"><i class="ti ti-credit-card" style="color:var(--blue)"></i>Card charges<span style="font-size:8px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:3px" id="cc-nxt"></span></div><div id="bd-c"></div><div class="btot"><span style="font-size:10px;color:var(--muted)">Total</span><span style="font-size:13px;font-weight:500;color:var(--blue)" id="bd-ct">$0</span></div></div>
-  <div class="bc"><div class="bc-t"><i class="ti ti-cash" style="color:var(--hint)"></i>Cash out</div><div id="bd-h"></div><div class="btot"><span style="font-size:10px;color:var(--muted)">Total</span><span style="font-size:13px;font-weight:500;color:var(--red)" id="bd-ht">$0</span></div></div>
-</div>
-<div class="af">
-  <div class="af-t"><i class="ti ti-plus" style="color:var(--blue)"></i>Add entry</div>
-  <div class="fg">
-    <div><span class="fl">Date</span><input type="date" id="f-dt" class="fi"/></div>
-    <div><span class="fl">Description</span><input type="text" id="f-ds" placeholder="e.g. Lunch at hawker" class="fi"/></div>
-    <div><span class="fl">Category</span>
-      <select id="f-cat" class="fsel">
-        <optgroup label="Income"><option value="salary">Salary</option><option value="reimbursement">Reimbursement</option><option value="govt">Govt payout</option></optgroup>
-        <optgroup label="Expenses"><option value="housing">Housing</option><option value="groceries">Groceries</option><option value="transport">Transport</option><option value="dining">Dining</option><option value="health">Health</option><option value="subscriptions">Subscriptions</option><option value="clothing">Clothing</option><option value="entertainment">Entertainment</option><option value="insurance">Insurance</option><option value="savings">Savings</option><option value="others">Others</option></optgroup>
-      </select>
+  <!-- MOBILE VIEWS -->
+  <div class="mobile-view active" id="mv-home">
+    <div class="spendable" id="sp-wrap-m">
+      <div class="sp-top">
+        <div><div style="font-size:11px;color:var(--hint);margin-bottom:2px"><i class="ti ti-cash-register" style="vertical-align:-2px;margin-right:3px"></i>Spendable</div><div class="sp-amount" id="sp-v-m">$0</div></div>
+        <div class="sp-closing"><div class="sp-closing-lbl">Closing</div><div class="sp-closing-val" id="s-bl-m">$0</div></div>
+      </div>
+      <div class="sp-msg" id="sp-s-m"></div>
+      <div class="sp-bar" style="margin-top:10px"><div class="sp-fill" id="sp-f-m"></div></div>
+      <div class="sp-footer"><span>$0</span><span id="sp-mx-m"></span></div>
     </div>
-    <div><span class="fl">Payment</span><select id="f-pay" class="fsel"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
-    <div><span class="fl">Amount ($)</span><input type="number" id="f-am" placeholder="0.00" min="0" step="0.01" class="fi"/></div>
-    <div><span class="fl">Status</span><select id="f-st" class="fsel"><option value="received">Received</option><option value="pending">Pending</option></select></div>
-    <div><span class="fl">&nbsp;</span><button onclick="addEntry()" class="fadd"><i class="ti ti-plus" style="font-size:12px;vertical-align:-2px;margin-right:2px"></i>Add</button></div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-lbl">Available</div><div class="stat-val" style="color:var(--green)" id="s-av-m">$0</div><div class="stat-sub" id="s-sub-m"></div></div>
+      <div class="stat"><div class="stat-lbl">Expenses paid</div><div class="stat-val" style="color:var(--red)" id="s-ex-m">$0</div></div>
+    </div>
+    <div style="display:none;font-size:11px;color:var(--amber);margin:-6px 0 10px 2px" id="s-pn-m"></div>
+    <div class="card"><div class="card-title"><i class="ti ti-arrow-down-circle" style="color:var(--green)"></i>Income</div><div id="bd-i-m"></div><div class="btot"><span style="font-size:11px;color:var(--muted)">Available</span><span style="font-size:14px;font-weight:600;color:var(--green)" id="bd-it-m">$0</span></div></div>
+    <div class="card"><div class="card-title"><i class="ti ti-credit-card" style="color:var(--blue)"></i>Card charges<span id="cc-nxt-m" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span></div><div id="bd-c-m"></div><div class="btot"><span style="font-size:11px;color:var(--muted)">Total</span><span style="font-size:14px;font-weight:600;color:var(--blue)" id="bd-ct-m">$0</span></div></div>
+    <div class="card"><div class="card-title"><i class="ti ti-cash" style="color:var(--hint)"></i>Cash out</div><div id="bd-h-m"></div><div class="btot"><span style="font-size:11px;color:var(--muted)">Total</span><span style="font-size:14px;font-weight:600;color:var(--red)" id="bd-ht-m">$0</span></div></div>
+    <div class="card" id="bill-card-m" style="display:none"><div class="card-title"><i class="ti ti-receipt" style="color:var(--red)"></i>CC bill<span id="bill-lbl-m" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span><span style="font-size:9px;color:var(--hint);font-style:italic;margin-left:3px">auto</span></div><div id="bill-content-m"></div></div>
+    <div class="card"><div class="card-title"><i class="ti ti-coin" style="color:var(--green)"></i>CIMB cashback</div><div id="cimb-m"></div></div>
+    <div class="card"><div class="card-title"><i class="ti ti-luggage" style="color:var(--blue)"></i>Samsonite — $2,000</div><div id="sam-m"></div></div>
   </div>
-</div>
-<div class="lsec"><i class="ti ti-arrow-down-circle" style="color:var(--green);font-size:12px"></i>Income</div>
-<table class="lt"><thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:92px">Category</th><th style="width:84px;text-align:right">Amount</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead><tbody id="inc-body"></tbody></table>
-<div class="lsec"><i class="ti ti-credit-card" style="color:var(--blue);font-size:12px"></i>Card charges <span id="cc-lbl" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0"></span></div>
-<table class="lt"><thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:88px">Category</th><th style="width:78px;text-align:right">Amount</th><th style="width:60px;text-align:right">Cashback</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead><tbody id="card-body"></tbody></table>
-<div class="lsec"><i class="ti ti-cash" style="color:var(--hint);font-size:12px"></i>Cash expenses</div>
-<table class="lt"><thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:88px">Category</th><th style="width:78px;text-align:right">Amount</th><th style="width:62px;text-align:center">Status</th><th style="width:30px"></th></tr></thead><tbody id="cash-body"></tbody></table>
-<div id="bill-sec" style="display:none;margin-bottom:12px">
-  <div class="lsec"><i class="ti ti-receipt" style="color:var(--red);font-size:12px"></i>CC bill payment <span id="bill-lbl" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0"></span><span style="font-size:8px;color:var(--hint);font-style:italic;margin-left:4px">auto-calculated</span></div>
-  <table class="lt"><thead><tr><th style="width:84px">Date</th><th>Description</th><th style="width:78px;text-align:right">Amount</th></tr></thead><tbody id="bill-body"></tbody></table>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
-  <div class="bc"><div class="bc-t"><i class="ti ti-coin" style="color:var(--green)"></i>CIMB cashback status</div><div id="cimb-bd"></div></div>
-  <div class="bc"><div class="bc-t"><i class="ti ti-luggage" style="color:var(--blue)"></i>Samsonite promo — $2,000 target</div><div id="sam-bd"></div></div>
-</div>
-</div>
 
-<div class="btmbar">
-  <div class="bstat"><i class="ti ti-calendar" style="font-size:11px"></i>Period <strong id="bt-p"></strong></div>
-  <div class="bstat"><i class="ti ti-list" style="font-size:11px"></i>Entries <strong id="bt-e">0</strong></div>
-  <div class="bstat"><i class="ti ti-luggage" style="font-size:11px"></i>Samsonite <strong id="bt-s">0%</strong></div>
-  <div class="bstat"><i class="ti ti-coin" style="font-size:11px"></i>Cashback <strong id="bt-c">+$0</strong></div>
-  <button class="reset-btn" onclick="resetData()">Reset data</button>
-</div>
-</div><!-- /main-app -->
+  <div class="mobile-view" id="mv-add">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-plus" style="color:var(--blue)"></i>Add entry</div>
+      <div class="form-row-2" style="margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0"><span class="form-label">Date</span><input type="date" id="mf-dt" class="form-input"/></div>
+        <div class="form-group" style="margin-bottom:0"><span class="form-label">Amount ($)</span><input type="number" id="mf-am" placeholder="0.00" min="0" step="0.01" class="form-input" inputmode="decimal"/></div>
+      </div>
+      <div class="form-group"><span class="form-label">Description</span><input type="text" id="mf-ds" placeholder="e.g. Lunch at hawker" class="form-input"/></div>
+      <div class="form-row-2" style="margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0"><span class="form-label">Category</span>
+          <select id="mf-cat" class="form-select">
+            <optgroup label="Income"><option value="salary">Salary</option><option value="reimbursement">Reimbursement</option><option value="govt">Govt payout</option></optgroup>
+            <optgroup label="Expenses"><option value="housing">Housing</option><option value="groceries">Groceries</option><option value="transport">Transport</option><option value="dining">Dining</option><option value="health">Health</option><option value="subscriptions">Subscriptions</option><option value="clothing">Clothing</option><option value="entertainment">Entertainment</option><option value="insurance">Insurance</option><option value="savings">Savings</option><option value="others">Others</option></optgroup>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0"><span class="form-label">Payment</span><select id="mf-pay" class="form-select"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
+      </div>
+      <div class="form-group"><span class="form-label">Status</span><select id="mf-st" class="form-select"><option value="received">Received</option><option value="pending">Pending</option></select></div>
+      <button onclick="addEntryM()" class="add-btn"><i class="ti ti-plus" style="font-size:15px"></i>Add entry</button>
+    </div>
+  </div>
+
+  <div class="mobile-view" id="mv-log">
+    <div class="card">
+      <div class="log-sec"><i class="ti ti-arrow-down-circle" style="color:var(--green);font-size:12px"></i>Income</div>
+      <div id="log-inc-m"></div>
+      <div class="log-sec" style="margin-top:14px"><i class="ti ti-credit-card" style="color:var(--blue);font-size:12px"></i>Card charges<span id="cc-lbl-m" style="font-size:9px;color:var(--hint);font-weight:400;letter-spacing:0;margin-left:4px"></span></div>
+      <div id="log-card-m"></div>
+      <div class="log-sec" style="margin-top:14px"><i class="ti ti-cash" style="color:var(--hint);font-size:12px"></i>Cash expenses</div>
+      <div id="log-cash-m"></div>
+    </div>
+  </div>
+
+  <div class="mobile-view" id="mv-wallet">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-wallet" style="color:var(--blue)"></i>Current balances</div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-building-bank"></i></div><span class="wallet-name">DBS Bank</span><input class="wallet-input" type="number" id="mw0" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-cash"></i></div><span class="wallet-name">Cash</span><input class="wallet-input" type="number" id="mw1" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut (main)</span><input class="wallet-input" type="number" id="mw2" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w2</span><input class="wallet-input" type="number" id="mw3" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w3</span><input class="wallet-input" type="number" id="mw4" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w4</span><input class="wallet-input" type="number" id="mw5" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div class="wallet-total"><span style="font-size:13px;color:var(--muted);font-weight:500">Total</span><span style="font-size:17px;font-weight:600;color:var(--green)" id="mw-tot">$0.00</span></div>
+    </div>
+    <button onclick="resetData()" style="background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--red);font-size:13px;padding:13px;width:100%;cursor:pointer">Reset all data to defaults</button>
+  </div>
+
+  <!-- BOTTOM NAV (mobile only) -->
+  <div class="bottom-nav">
+    <div class="nav-items">
+      <button class="nav-item active" id="nav-home" onclick="showMV('home')"><i class="ti ti-home"></i>Home</button>
+      <button class="nav-item" id="nav-add" onclick="showMV('add')"><i class="ti ti-plus-circle"></i>Add</button>
+      <button class="nav-item" id="nav-log" onclick="showMV('log')"><i class="ti ti-list"></i>Log</button>
+      <button class="nav-item" id="nav-wallet" onclick="showMV('wallet')"><i class="ti ti-wallet"></i>Wallets</button>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <script>
-// ─── Supabase ─────────────────────────────────────────────────────────────────
-var SUPA_URL='https://jwbwmevrsiwtzwyahlbc.supabase.co';
-var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3YndtZXZyc2l3dHp3eWFobGJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU1MzEsImV4cCI6MjA5NjkzMTUzMX0.34k0MMNHrMH6BOtAX1Xt_BJxrIQqMO7jGml6Qo1TSh0';
-var sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+// ── Supabase ─────────────────────────────────────────────────────────────────
+var SURL='https://jwbwmevrsiwtzwyahlbc.supabase.co';
+var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3YndtZXZyc2l3dHp3eWFobGJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU1MzEsImV4cCI6MjA5NjkzMTUzMX0.34k0MMNHrMH6BOtAX1Xt_BJxrIQqMO7jGml6Qo1TSh0';
+var sb=supabase.createClient(SURL,SKEY);
 
-// ─── PIN system ───────────────────────────────────────────────────────────────
-// PIN is hashed with SHA-256 before storing — never stored in plain text
-// The Supabase row key is derived from the PIN hash so no account needed
-var PIN_LS_KEY='bt_pin_hash';
-var pinBuffer='';
-var pinMode='enter'; // 'enter' | 'setup' | 'confirm'
-var pinFirst='';
-var savedPinHash=localStorage.getItem(PIN_LS_KEY)||'';
-
-async function sha256(str){
-  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-}
-
-// On load — decide mode
-if(!savedPinHash){
-  pinMode='setup';
-  document.getElementById('pin-sub').textContent='Choose a 4-digit PIN for your tracker';
-  document.getElementById('pin-setup-note').style.display='block';
-}
-
-function updatePinDots(n,state){
-  for(var i=0;i<4;i++){
-    var d=document.getElementById('d'+i);
-    d.className='pin-dot'+(i<n?' filled':'')+(state==='err'?' err':'');
-  }
-}
-
-function pinKey(k){
-  if(!k) return;
-  if(pinBuffer.length>=4) return;
-  pinBuffer+=k;
-  updatePinDots(pinBuffer.length,'');
-  document.getElementById('pin-msg').textContent='';
-  if(pinBuffer.length===4) setTimeout(submitPin,120);
-}
-
-function pinDel(){
-  if(pinBuffer.length>0){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots(pinBuffer.length,''); }
-}
-
-async function submitPin(){
-  var hash=await sha256(pinBuffer);
-  if(pinMode==='setup'){
-    pinFirst=hash;
-    pinBuffer='';
-    pinMode='confirm';
-    document.getElementById('pin-sub').textContent='Confirm your PIN';
-    document.getElementById('pin-setup-note').style.display='none';
-    updatePinDots(0,'');
-  } else if(pinMode==='confirm'){
-    if(hash===pinFirst){
-      savedPinHash=hash;
-      localStorage.setItem(PIN_LS_KEY,hash);
-      pinMode='enter';
-      await unlockWithHash(hash);
-    } else {
-      pinBuffer='';pinFirst='';pinMode='setup';
-      updatePinDots(4,'err');
-      document.getElementById('pin-msg').textContent="PINs didn't match — try again";
-      document.getElementById('pin-sub').textContent='Choose a 4-digit PIN';
-      document.getElementById('pin-setup-note').style.display='block';
-      setTimeout(function(){updatePinDots(0,'');},600);
-    }
+// ── PIN ───────────────────────────────────────────────────────────────────────
+var PIN_KEY='bt_pin_v1',pinBuf='',pinMode='enter',pinFirst='',savedHash=localStorage.getItem(PIN_KEY)||'';
+var RID=null,saveTimer=null;
+if(!savedHash){pinMode='setup';document.getElementById('pin-sub').textContent='Choose a 4-digit PIN';document.getElementById('pin-note').style.display='block';}
+async function sha256(s){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');}
+function updDots(n,st){for(var i=0;i<4;i++){var d=document.getElementById('pd'+i);d.className='pin-dot'+(i<n?' filled':'')+(st==='err'?' err':'');}}
+function pk(k){if(pinBuf.length>=4)return;pinBuf+=k;updDots(pinBuf.length,'');document.getElementById('pin-msg').textContent='';if(pinBuf.length===4)setTimeout(doPin,100);}
+function pd(){if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1);updDots(pinBuf.length,'');}}
+async function doPin(){
+  var h=await sha256(pinBuf);
+  if(pinMode==='setup'){pinFirst=h;pinBuf='';pinMode='confirm';document.getElementById('pin-sub').textContent='Confirm your PIN';updDots(0,'');}
+  else if(pinMode==='confirm'){
+    if(h===pinFirst){savedHash=h;localStorage.setItem(PIN_KEY,h);pinMode='enter';await unlock(h);}
+    else{pinBuf='';pinFirst='';pinMode='setup';updDots(4,'err');document.getElementById('pin-msg').textContent="PINs didn't match";document.getElementById('pin-sub').textContent='Choose a 4-digit PIN';setTimeout(function(){updDots(0,'');document.getElementById('pin-msg').textContent='';},800);}
   } else {
-    // Normal unlock
-    if(hash===savedPinHash){
-      await unlockWithHash(hash);
-    } else {
-      pinBuffer='';
-      updatePinDots(4,'err');
-      document.getElementById('pin-msg').textContent='Incorrect PIN';
-      setTimeout(function(){updatePinDots(0,'');document.getElementById('pin-msg').textContent='';},800);
-    }
+    if(h===savedHash){await unlock(h);}
+    else{pinBuf='';updDots(4,'err');document.getElementById('pin-msg').textContent='Incorrect PIN';setTimeout(function(){updDots(0,'');document.getElementById('pin-msg').textContent='';},800);}
   }
 }
-
-// ─── Sync (keyed by PIN hash — no account needed) ────────────────────────────
-var RECORD_ID=null;
-var saveTimer=null;
-
-function setSync(s){
-  var dot=document.getElementById('sync-dot');
-  var lbl=document.getElementById('sync-lbl');
-  dot.className='sync-dot'+(s==='syncing'?' syncing':s==='err'?' err':'');
-  lbl.textContent=s==='syncing'?'Saving…':s==='err'?'Sync error':'Synced';
-}
-
-async function saveToSupabase(){
+function setSync(s){var d=document.getElementById('sync-dot');d.className='sync-dot'+(s==='syncing'?' syncing':s==='err'?' err':'');}
+async function save(){if(!RID)return;setSync('syncing');var p={OFF:OFF,NID:NID,MD:MD,wallets:[0,1,2,3,4,5].map(function(i){return parseFloat(document.getElementById('w'+i).value)||0;})};var r=await sb.from('budget_data').upsert({user_id:RID,data:p,updated_at:new Date().toISOString()},{onConflict:'user_id'});setSync(r.error?'err':'ok');}
+function sched(){clearTimeout(saveTimer);saveTimer=setTimeout(save,800);}
+async function unlock(hash){
+  RID=hash.slice(0,8)+'-'+hash.slice(8,12)+'-'+hash.slice(12,16)+'-'+hash.slice(16,20)+'-'+hash.slice(20,32);
   setSync('syncing');
-  var payload={OFF:OFF,NID:NID,MD:MD,wallets:[0,1,2,3,4,5].map(function(i){return parseFloat(document.getElementById('w'+i).value)||0;})};
-  var res=await sb.from('budget_data').upsert({id:RECORD_ID,user_id:RECORD_ID,data:payload,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-  setSync(res.error?'err':'ok');
-}
-
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveToSupabase,800);}
-
-async function unlockWithHash(hash){
-  // Use first 36 chars of hash as a stable UUID-like record ID
-  RECORD_ID=hash.slice(0,8)+'-'+hash.slice(8,12)+'-'+hash.slice(12,16)+'-'+hash.slice(16,20)+'-'+hash.slice(20,32);
-  setSync('syncing');
-  // Try to load existing data
-  var res=await sb.from('budget_data').select('data').eq('user_id',RECORD_ID).maybeSingle();
-  if(res.data&&res.data.data){
-    var s=res.data.data;
-    OFF=s.OFF||0;NID=s.NID||1;MD=s.MD||{};
-    if(s.wallets) s.wallets.forEach(function(v,i){document.getElementById('w'+i).value=v;});
-  } else {
-    // First time — seed defaults
-    seedDefaults();
-    W_DEFAULTS.forEach(function(v,i){document.getElementById('w'+i).value=v;});
-    await saveToSupabase();
-  }
+  var r=await sb.from('budget_data').select('data').eq('user_id',RID).maybeSingle();
+  if(r.data&&r.data.data){var s=r.data.data;OFF=s.OFF||0;NID=s.NID||1;MD=s.MD||{};if(s.wallets){s.wallets.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});}}
+  else{seedDefaults();W_DEF.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});await save();}
   setSync('ok');
-  // Show app
   document.getElementById('pin-screen').style.display='none';
-  document.getElementById('main-app').style.display='flex';
-  pinBuffer='';
-  updatePinDots(0,'');
-  // Init UI
-  var il=ml(OFF);
-  document.getElementById('mon-lbl').textContent=il;
-  document.getElementById('bt-p').textContent=il;
+  document.getElementById('app').className='app visible';
+  pinBuf='';updDots(0,'');
+  var il=ml(OFF);document.getElementById('mon-lbl').textContent=il;
   document.getElementById('prev-btn').disabled=(OFF===0);
   document.getElementById('f-dt').value=mdp(OFF)+'-01';
-  updateW();
-  render();
+  document.getElementById('mf-dt').value=mdp(OFF)+'-01';
+  updateW();render();
 }
+function lockApp(){document.getElementById('pin-screen').style.display='flex';document.getElementById('app').className='app';pinBuf='';pinMode='enter';updDots(0,'');document.getElementById('pin-sub').textContent='Enter your PIN to unlock';document.getElementById('pin-note').style.display='none';document.getElementById('pin-msg').textContent='';}
 
-function lockApp(){
-  document.getElementById('main-app').style.display='none';
-  document.getElementById('pin-screen').style.display='flex';
-  pinBuffer='';pinMode='enter';
-  updatePinDots(0,'');
-  document.getElementById('pin-sub').textContent='Enter your PIN to access your data';
-  document.getElementById('pin-setup-note').style.display='none';
-  document.getElementById('pin-msg').textContent='';
-}
+// ── Mobile view nav ───────────────────────────────────────────────────────────
+function showMV(v){['home','add','log','wallet'].forEach(function(n){document.getElementById('mv-'+n).classList.toggle('active',n===v);document.getElementById('nav-'+n).classList.toggle('active',n===v);});}
 
-// ─── App constants ────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 var ICATS=new Set(['salary','reimbursement','govt']);
 var CBR={dining:2,subscriptions:2,entertainment:2};
 var CLBL={salary:'Salary',reimbursement:'Reimbursement',govt:'Govt payout',housing:'Housing',groceries:'Groceries',transport:'Transport',dining:'Dining',health:'Health',subscriptions:'Subscriptions',clothing:'Clothing',entertainment:'Entertainment',insurance:'Insurance',savings:'Savings',others:'Others'};
 var MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var STGT=2000,JO=834.80,PRE=483.64;
 var MCFG=[{wd:11,dr:2,subs:126.47,tr:0,ph:false},{wd:22,dr:0,subs:248.78,tr:2.50,ph:true},{wd:20,dr:0,subs:248.78,tr:2.50,ph:true}];
-var W_DEFAULTS=[202.70,4.00,39.83,170.53,2.47,415.27];
-var OFF=0,MD={},NID=1;
+var W_DEF=[202.70,4.00,39.83,170.53,2.47,415.27];
+var OFF=0,MD={},NID=1,expandId=null;
 
 function r2(n){return Math.round(n*100)/100;}
 function gk(o){return'M'+o;}
@@ -428,43 +494,134 @@ function ge(){var k=gk(OFF);if(!MD[k])MD[k]=[];return MD[k];}
 function ml(o){var m=(5+o)%12,y=2026+Math.floor((5+o)/12);return MN[m]+' '+y;}
 function mdp(o){var m=(5+o)%12,y=2026+Math.floor((5+o)/12);return y+'-'+(m+1).toString().padStart(2,'0');}
 function fmt(n){return n.toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});}
-
 function getCC(o){if(o===0)return PRE;var prev=MD[gk(o-1)]||[],mc=0;for(var i=0;i<prev.length;i++){if(!prev[i].inc&&prev[i].pay==='card'&&!prev[i].pending)mc+=prev[i].amt;}return r2((o===1?PRE:0)+mc);}
-function nextCC(o){return getCC(o+1);}
+function nCC(o){return getCC(o+1);}
 function getOpen(o){if(o===0)return JO;var b=JO;for(var i=0;i<o;i++){var en=MD[gk(i)]||[],cc=getCC(i);for(var j=0;j<en.length;j++){if(en[j].inc&&!en[j].pending)b+=en[j].amt;else if(!en[j].inc&&en[j].pay==='cash'&&!en[j].pending)b-=en[j].amt;}if(i>0)b-=cc;}return r2(b);}
 
-function mkEst(o){var c=MCFG[o]||{wd:20,dr:0,subs:248.78,tr:2.50,ph:true};var wd=c.wd,dr=c.dr,subs=c.subs,tr=c.tr,ph=c.ph,dd=wd-dr,pfx=mdp(o);var la=r2(wd*6.30),da=r2(dd*6.67),ta=r2(wd*tr);var ddesc=dr>0?'Dinner ('+dd+'d x $6.67, excl. '+dr+" Nando's)":'Dinner ('+wd+'d x $6.67)';var arr=[{date:pfx+'-01',desc:'Lunch ('+wd+'d x $6.30)',cat:'dining',pay:'card',amt:la,inc:false,est:true,rec:false,pending:false},{date:pfx+'-01',desc:ddesc,cat:'dining',pay:'card',amt:da,inc:false,est:true,rec:false,pending:false},{date:pfx+'-01',desc:'Subscriptions'+(o===0?' (partial)':''),cat:'subscriptions',pay:'card',amt:subs,inc:false,est:true,rec:false,pending:false}];if(ta>0)arr.push({date:pfx+'-01',desc:'Transport ('+wd+'d x $'+tr+')',cat:'transport',pay:'cash',amt:ta,inc:false,est:true,rec:false,pending:false});if(ph)arr.push({date:pfx+'-01',desc:"Parents' phone bill",cat:'others',pay:'cash',amt:76.15,inc:false,est:false,rec:true,pending:false});return arr.map(function(e){var r=(e.pay==='card'&&CBR[e.cat])?CBR[e.cat]:0;return Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0},e);});}
-
-function seedDefaults(){function mk(list,key,offset){var arr=mkEst(offset);for(var i=0;i<list.length;i++){var e=list[i],r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0;arr.push(Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0,est:false,rec:false},e));}MD[key]=arr;}
-mk([{date:'2026-06-18',desc:"Friend reimb. (Nando's 18 Jun)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},{date:'2026-06-20',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:251.77,inc:true,pending:false},{date:'2026-06-25',desc:"Friend reimb. (Nando's 25 Jun)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},{date:'2026-06-30',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:true},{date:'2026-06-18',desc:"Nando's dinner — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-18',desc:"Nando's dinner — friend's share",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-25',desc:"Nando's dinner — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-25',desc:"Nando's dinner — friend's share",cat:'dining',pay:'card',amt:23,inc:false,pending:false}],'M0',0);
-mk([{date:'2026-07-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},{date:'2026-07-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},{date:'2026-07-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false},{date:'2026-07-05',desc:'Medicine bill',cat:'health',pay:'card',amt:233.40,inc:false,pending:false},{date:'2026-07-10',desc:'Shopee bill',cat:'others',pay:'cash',amt:600,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (1st policy)',cat:'insurance',pay:'cash',amt:125.72,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (2nd policy)',cat:'insurance',pay:'cash',amt:300,inc:false,pending:false},{date:'2026-07-25',desc:"Doctor's appointment",cat:'health',pay:'card',amt:63.80,inc:false,pending:false},{date:'2026-07-25',desc:'Lab test',cat:'health',pay:'card',amt:346.80,inc:false,pending:false}],'M1',1);
+function mkEst(o){var c=MCFG[o]||{wd:20,dr:0,subs:248.78,tr:2.50,ph:true};var wd=c.wd,dr=c.dr,subs=c.subs,tr=c.tr,ph=c.ph,dd=wd-dr,pfx=mdp(o);var la=r2(wd*6.30),da=r2(dd*6.67),ta=r2(wd*tr);var ddesc=dr>0?'Dinner ('+dd+'d, excl. '+dr+" Nando's)":'Dinner ('+wd+'d x $6.67)';var arr=[{date:pfx+'-01',desc:'Lunch ('+wd+'d x $6.30)',cat:'dining',pay:'card',amt:la,inc:false,est:true,rec:false,pending:false},{date:pfx+'-01',desc:ddesc,cat:'dining',pay:'card',amt:da,inc:false,est:true,rec:false,pending:false},{date:pfx+'-01',desc:'Subscriptions'+(o===0?' (partial)':''),cat:'subscriptions',pay:'card',amt:subs,inc:false,est:true,rec:false,pending:false}];if(ta>0)arr.push({date:pfx+'-01',desc:'Transport ('+wd+'d x $'+tr+')',cat:'transport',pay:'cash',amt:ta,inc:false,est:true,rec:false,pending:false});if(ph)arr.push({date:pfx+'-01',desc:"Parents' phone bill",cat:'others',pay:'cash',amt:76.15,inc:false,est:false,rec:true,pending:false});return arr.map(function(e){var r=(e.pay==='card'&&CBR[e.cat])?CBR[e.cat]:0;return Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0},e);});}
+function seedDefaults(){function mk(list,key,off){var arr=mkEst(off);for(var i=0;i<list.length;i++){var e=list[i],r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0;arr.push(Object.assign({id:NID++,cb:r>0?r2(e.amt*r/100):0,est:false,rec:false},e));}MD[key]=arr;}
+mk([{date:'2026-06-18',desc:"Friend reimb. (Nando's 18/6)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},{date:'2026-06-20',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:251.77,inc:true,pending:false},{date:'2026-06-25',desc:"Friend reimb. (Nando's 25/6)",cat:'reimbursement',pay:'na',amt:23,inc:true,pending:false},{date:'2026-06-30',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:true},{date:'2026-06-18',desc:"Nando's — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-18',desc:"Nando's — friend",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-25',desc:"Nando's — you",cat:'dining',pay:'card',amt:23,inc:false,pending:false},{date:'2026-06-25',desc:"Nando's — friend",cat:'dining',pay:'card',amt:23,inc:false,pending:false}],'M0',0);
+mk([{date:'2026-07-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},{date:'2026-07-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},{date:'2026-07-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false},{date:'2026-07-05',desc:'Medicine bill',cat:'health',pay:'card',amt:233.40,inc:false,pending:false},{date:'2026-07-10',desc:'Shopee bill',cat:'others',pay:'cash',amt:600,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (1st)',cat:'insurance',pay:'cash',amt:125.72,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (2nd)',cat:'insurance',pay:'cash',amt:300,inc:false,pending:false},{date:'2026-07-25',desc:"Doctor's appt",cat:'health',pay:'card',amt:63.80,inc:false,pending:false},{date:'2026-07-25',desc:'Lab test',cat:'health',pay:'card',amt:346.80,inc:false,pending:false}],'M1',1);
 mk([{date:'2026-08-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},{date:'2026-08-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},{date:'2026-08-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false}],'M2',2);}
 
-function updateW(){var t=0;for(var i=0;i<6;i++)t+=parseFloat(document.getElementById('w'+i).value)||0;document.getElementById('w-tot').textContent='$'+fmt(t);scheduleSave();}
-function togglePending(id){var e=ge().find(function(x){return x.id===id;});if(e){e.pending=!e.pending;render();scheduleSave();}}
-function deleteE(id){var a=ge(),i=a.findIndex(function(x){return x.id===id;});if(i>-1){a.splice(i,1);render();scheduleSave();}}
-function updF(id,f,v){var e=ge().find(function(x){return x.id===id;});if(!e)return;if(f==='amt'){var n=parseFloat(v);if(!isNaN(n)&&n>=0){e.amt=n;var r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0;e.cb=r>0?r2(n*r/100):0;e.est=false;}}else if(f==='cat'){e.cat=v;var r=(e.pay==='card'&&!e.inc&&CBR[v])?CBR[v]:0;e.cb=r>0?r2(e.amt*r/100):0;e.est=false;}else{e[f]=v;if(f==='desc'||f==='date')e.est=false;}render();scheduleSave();}
-function chMon(d){var n=OFF+d;if(n<0)return;OFF=n;var l=ml(OFF);document.getElementById('mon-lbl').textContent=l;document.getElementById('bt-p').textContent=l;document.getElementById('prev-btn').disabled=(OFF===0);document.getElementById('f-dt').value=mdp(OFF)+'-01';render();scheduleSave();}
+// ── Wallet sync desktop↔mobile ────────────────────────────────────────────────
+function updateW(){var t=0;for(var i=0;i<6;i++){var v=parseFloat(document.getElementById('w'+i).value)||0;t+=v;document.getElementById('mw'+i).value=v;}document.getElementById('w-tot').textContent='$'+fmt(t);document.getElementById('mw-tot').textContent='$'+fmt(t);sched();}
+function updateWM(){var t=0;for(var i=0;i<6;i++){var v=parseFloat(document.getElementById('mw'+i).value)||0;t+=v;document.getElementById('w'+i).value=v;}document.getElementById('w-tot').textContent='$'+fmt(t);document.getElementById('mw-tot').textContent='$'+fmt(t);sched();}
+
+function toggleExpand(id){expandId=(expandId===id?null:id);render();}
+function togglePending(id){var e=ge().find(function(x){return x.id===id;});if(e){e.pending=!e.pending;render();sched();}}
+function deleteE(id){var a=ge(),i=a.findIndex(function(x){return x.id===id;});if(i>-1){a.splice(i,1);expandId=null;render();sched();}}
+function updF(id,f,v){var e=ge().find(function(x){return x.id===id;});if(!e)return;if(f==='amt'){var n=parseFloat(v);if(!isNaN(n)&&n>=0){e.amt=n;var r=(e.pay==='card'&&!e.inc&&CBR[e.cat])?CBR[e.cat]:0;e.cb=r>0?r2(n*r/100):0;e.est=false;}}else if(f==='cat'){e.cat=v;var r=(e.pay==='card'&&!e.inc&&CBR[v])?CBR[v]:0;e.cb=r>0?r2(e.amt*r/100):0;e.est=false;}else{e[f]=v;if(f!=='pending')e.est=false;}render();sched();}
+
+function chMon(d){var n=OFF+d;if(n<0)return;OFF=n;expandId=null;var l=ml(OFF);document.getElementById('mon-lbl').textContent=l;document.getElementById('prev-btn').disabled=(OFF===0);document.getElementById('f-dt').value=mdp(OFF)+'-01';document.getElementById('mf-dt').value=mdp(OFF)+'-01';render();sched();}
+
 document.getElementById('f-cat').addEventListener('change',function(){document.getElementById('f-pay').value=ICATS.has(this.value)?'na':'card';});
-function addEntry(){var dt=document.getElementById('f-dt').value,ds=document.getElementById('f-ds').value.trim(),cat=document.getElementById('f-cat').value,pay=document.getElementById('f-pay').value,amt=parseFloat(document.getElementById('f-am').value),st=document.getElementById('f-st').value;if(!dt||!ds||isNaN(amt)||amt<=0)return;var inc=ICATS.has(cat),r=(pay==='card'&&!inc&&CBR[cat])?CBR[cat]:0;ge().push({id:NID++,date:dt,desc:ds,cat:cat,pay:inc?'na':pay,amt:amt,inc:inc,pending:st==='pending',est:false,rec:false,cb:r>0?r2(amt*r/100):0});document.getElementById('f-ds').value='';document.getElementById('f-am').value='';render();scheduleSave();}
-async function resetData(){if(!confirm('Reset all data to defaults?'))return;OFF=0;NID=1;MD={};seedDefaults();W_DEFAULTS.forEach(function(v,i){document.getElementById('w'+i).value=v;});updateW();var il=ml(0);document.getElementById('mon-lbl').textContent=il;document.getElementById('bt-p').textContent=il;document.getElementById('prev-btn').disabled=true;document.getElementById('f-dt').value=mdp(0)+'-01';render();await saveToSupabase();}
+document.getElementById('mf-cat').addEventListener('change',function(){document.getElementById('mf-pay').value=ICATS.has(this.value)?'na':'card';});
+
+function doAdd(dt,ds,cat,pay,amt,st){if(!dt||!ds||isNaN(amt)||amt<=0)return false;var inc=ICATS.has(cat),r=(pay==='card'&&!inc&&CBR[cat])?CBR[cat]:0;ge().push({id:NID++,date:dt,desc:ds,cat:cat,pay:inc?'na':pay,amt:amt,inc:inc,pending:st==='pending',est:false,rec:false,cb:r>0?r2(amt*r/100):0});return true;}
+function addEntry(){if(doAdd(document.getElementById('f-dt').value,document.getElementById('f-ds').value.trim(),document.getElementById('f-cat').value,document.getElementById('f-pay').value,parseFloat(document.getElementById('f-am').value),document.getElementById('f-st').value)){document.getElementById('f-ds').value='';document.getElementById('f-am').value='';render();sched();}}
+function addEntryM(){if(doAdd(document.getElementById('mf-dt').value,document.getElementById('mf-ds').value.trim(),document.getElementById('mf-cat').value,document.getElementById('mf-pay').value,parseFloat(document.getElementById('mf-am').value),document.getElementById('mf-st').value)){document.getElementById('mf-ds').value='';document.getElementById('mf-am').value='';render();sched();showMV('log');}}
+async function resetData(){if(!confirm('Reset all data to defaults?'))return;OFF=0;NID=1;MD={};seedDefaults();W_DEF.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});updateW();document.getElementById('mon-lbl').textContent=ml(0);document.getElementById('prev-btn').disabled=true;document.getElementById('f-dt').value=mdp(0)+'-01';document.getElementById('mf-dt').value=mdp(0)+'-01';expandId=null;render();await save();}
+
 function allCard(){var t=PRE;for(var i=0;i<=2;i++){var en=MD[gk(i)]||[];for(var j=0;j<en.length;j++){if(!en[j].inc&&en[j].pay==='card'&&!en[j].pending)t+=en[j].amt;}}return t;}
 
-function renderBD(entries,op,ccBD,totPend){var im={},cm={},hm={},ck=OFF===0?'Starting balance':'From '+ml(OFF-1);if(op!==0)im[ck]=op;for(var i=0;i<entries.length;i++){var e=entries[i];if(e.inc&&!e.pending)im[e.cat]=(im[e.cat]||0)+e.amt;else if(!e.inc&&e.pay==='card'&&!e.pending)cm[e.cat]=(cm[e.cat]||0)+e.amt;else if(!e.inc&&e.pay==='cash'&&!e.pending)hm[e.cat]=(hm[e.cat]||0)+e.amt;}if(ccBD>0)hm['CC bill']=(hm['CC bill']||0)+ccBD;function rI(m){var ks=Object.keys(m);if(!ks.length)return'<div style="font-size:10px;color:var(--hint);padding:3px 0">No entries</div>';var rest=ks.filter(function(k){return k!==ck;}).sort(function(a,b){return m[b]-m[a];});return([].concat(ks.indexOf(ck)>=0?[ck]:[],rest)).map(function(k){var iC=k===ck;return'<div class="brow"><span class="blbl" style="'+(iC?'color:var(--hint);font-style:italic':'')+'">'+( iC?'↳ ':'')+( CLBL[k]||k)+'</span><span style="font-size:10px;font-weight:500;color:'+(iC?'var(--hint)':'var(--green)')+'">$'+fmt(m[k])+'</span></div>';}).join('')+(totPend>0?'<div class="brow"><span class="blbl" style="color:var(--amber);font-style:italic">Pending</span><span style="font-size:10px;color:var(--amber)">+$'+fmt(totPend)+'</span></div>':'');}function rS(m,col){var ks=Object.keys(m);if(!ks.length)return'<div style="font-size:10px;color:var(--hint);padding:3px 0">No entries</div>';return ks.sort(function(a,b){return m[b]-m[a];}).map(function(k){return'<div class="brow"><span class="blbl">'+(CLBL[k]||k)+'</span><span style="font-size:10px;font-weight:500;color:'+col+'">$'+fmt(m[k])+'</span></div>';}).join('');}var it=Object.values(im).reduce(function(s,v){return s+v;},0),ct=Object.values(cm).reduce(function(s,v){return s+v;},0),ht=Object.values(hm).reduce(function(s,v){return s+v;},0);document.getElementById('bd-i').innerHTML=rI(im);document.getElementById('bd-c').innerHTML=rS(cm,'var(--blue)');document.getElementById('bd-h').innerHTML=ht>0?rS(hm,'var(--red)'):'<div style="font-size:10px;color:var(--hint);padding:3px 0">No cash expenses</div>';document.getElementById('bd-it').textContent='$'+fmt(it);document.getElementById('bd-ct').textContent='$'+fmt(ct);document.getElementById('bd-ht').textContent=ht>0?'-$'+fmt(ht):'$0.00';}
+// ── Entry row ─────────────────────────────────────────────────────────────────
+function entryRow(e){
+  var isExp=expandId===e.id;
+  var ac=e.inc?'var(--green)':e.pay==='card'?'var(--blue)':'var(--red)';
+  var badge=(e.rec?'<span class="epill rec">↻</span>':e.est?'<span class="epill est">Est.</span>':'')+(e.pending?'<span class="epill pend">Pending</span>':'');
+  var tag=e.pay==='card'?'Card':e.pay==='cash'?'Cash':'Income';
+  var cb=e.pay==='card'&&e.cb>0?'<div class="entry-cb">+$'+fmt(e.cb)+'</div>':'';
+  var catOpts=Object.keys(CLBL).map(function(v){return'<option value="'+v+'"'+(v===e.cat?' selected':'')+'>'+CLBL[v]+'</option>';}).join('');
+  var exp=isExp?'<div class="entry-expanded">'+
+    '<div class="expand-grid"><div><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Date</span><input class="expand-input" type="date" value="'+e.date+'" onchange="updF('+e.id+',\'date\',this.value)"/></div><div><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Amount ($)</span><input class="expand-input" type="number" value="'+e.amt+'" step="0.01" inputmode="decimal" onchange="updF('+e.id+',\'amt\',this.value)"/></div></div>'+
+    '<div style="margin-bottom:8px"><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Description</span><input class="expand-input" type="text" value="'+e.desc.replace(/"/g,'&quot;')+'" onchange="updF('+e.id+',\'desc\',this.value)" style="width:100%"/></div>'+
+    '<div style="margin-bottom:8px"><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Category</span><select class="expand-select" onchange="updF('+e.id+',\'cat\',this.value)">'+catOpts+'</select></div>'+
+    '<div class="expand-actions"><button class="pend-btn'+(e.pending?' on':'')+'" onclick="togglePending('+e.id+')">'+(e.pending?'Mark as received':'Mark as pending')+'</button><button class="del-btn" onclick="deleteE('+e.id+')"><i class="ti ti-trash"></i>Delete</button></div>'+
+  '</div>':'';
+  return'<div><div class="entry" onclick="toggleExpand('+e.id+')"><div class="entry-left"><div class="entry-desc">'+e.desc+badge+'</div><div class="entry-meta">'+e.date+' · '+tag+'</div></div><div class="entry-right"><div class="entry-amount" style="color:'+ac+'">'+(e.inc?'+':e.pay==='card'?'':'-')+'$'+fmt(e.amt)+'</div>'+cb+'</div></div>'+exp+'</div>';
+}
 
-function renderSP(clos,ncc){var s=r2(clos-ncc),col,st;if(s<0){col='var(--red)';st="⚠ Can't cover CC bill ($"+fmt(ncc)+") — $"+fmt(Math.abs(s))+" short.";}else if(s<200){col='var(--amber)';st="Very tight — $"+fmt(s)+" left after reserving $"+fmt(ncc)+".";}else if(s<500){col='var(--amber)';st="Watch it — $"+fmt(s)+" free after setting aside $"+fmt(ncc)+".";}else{col='var(--green)';st="Good — $"+fmt(s)+" spendable after reserving $"+fmt(ncc)+".";}document.getElementById('sp-v').textContent=(s<0?'-$':'$')+fmt(Math.abs(s));document.getElementById('sp-v').style.color=col;document.getElementById('sp-s').textContent=st;document.getElementById('sp-s').style.color=col;document.getElementById('sp-wrap').style.borderLeftColor=col;var pct=s<=0?0:Math.min(100,Math.round(s/Math.max(clos,1)*100));document.getElementById('sp-f').style.width=pct+'%';document.getElementById('sp-f').style.background=col;document.getElementById('sp-mx').textContent='Closing $'+fmt(clos);}
+// ── Breakdown helper ──────────────────────────────────────────────────────────
+function renderBD(suffix,entries,op,ccBD,totPend){
+  var im={},cm={},hm={},ck=OFF===0?'Starting balance':'From '+ml(OFF-1);
+  if(op!==0)im[ck]=op;
+  for(var i=0;i<entries.length;i++){var e=entries[i];if(e.inc&&!e.pending)im[e.cat]=(im[e.cat]||0)+e.amt;else if(!e.inc&&e.pay==='card'&&!e.pending)cm[e.cat]=(cm[e.cat]||0)+e.amt;else if(!e.inc&&e.pay==='cash'&&!e.pending)hm[e.cat]=(hm[e.cat]||0)+e.amt;}
+  if(ccBD>0)hm['CC bill']=(hm['CC bill']||0)+ccBD;
+  function rI(m){var ks=Object.keys(m);if(!ks.length)return'<div style="font-size:11px;color:var(--hint);padding:4px 0">No entries</div>';var rest=ks.filter(function(k){return k!==ck;}).sort(function(a,b){return m[b]-m[a];});return([].concat(ks.indexOf(ck)>=0?[ck]:[],rest)).map(function(k){var iC=k===ck;return'<div class="brow"><span class="blbl" style="'+(iC?'color:var(--hint);font-style:italic':'')+'">'+( iC?'↳ ':'')+( CLBL[k]||k)+'</span><span style="font-size:11px;font-weight:500;color:'+(iC?'var(--hint)':'var(--green)')+'">$'+fmt(m[k])+'</span></div>';}).join('')+(totPend>0?'<div class="brow"><span class="blbl" style="color:var(--amber);font-style:italic">Pending</span><span style="font-size:11px;color:var(--amber)">+$'+fmt(totPend)+'</span></div>':'');}
+  function rS(m,col){var ks=Object.keys(m);if(!ks.length)return'<div style="font-size:11px;color:var(--hint);padding:4px 0">No entries</div>';return ks.sort(function(a,b){return m[b]-m[a];}).map(function(k){return'<div class="brow"><span class="blbl">'+(CLBL[k]||k)+'</span><span style="font-size:11px;font-weight:500;color:'+col+'">$'+fmt(m[k])+'</span></div>';}).join('');}
+  var it=Object.values(im).reduce(function(s,v){return s+v;},0),ct=Object.values(cm).reduce(function(s,v){return s+v;},0),ht=Object.values(hm).reduce(function(s,v){return s+v;},0);
+  document.getElementById('bd-i-'+suffix).innerHTML=rI(im);document.getElementById('bd-c-'+suffix).innerHTML=rS(cm,'var(--blue)');document.getElementById('bd-h-'+suffix).innerHTML=ht>0?rS(hm,'var(--red)'):'<div style="font-size:11px;color:var(--hint);padding:4px 0">No cash expenses</div>';
+  document.getElementById('bd-it-'+suffix).textContent='$'+fmt(it);document.getElementById('bd-ct-'+suffix).textContent='$'+fmt(ct);document.getElementById('bd-ht-'+suffix).textContent=ht>0?'-$'+fmt(ht):'$0.00';
+}
 
-function mkPendBtn(id,ip){return'<button class="lpbtn'+(ip?' on':'')+'" onclick="togglePending('+id+')">'+(ip?'Pending':'Received')+'</button>';}
-function editRow(e,ac,extra){var co=Object.keys(CLBL).map(function(v){return'<option value="'+v+'"'+(v===e.cat?' selected':'')+'>'+CLBL[v]+'</option>';}).join('');var badge=(e.rec?'<span class="lpill prec">↻</span>':e.est?'<span class="lpill pest">Est.</span>':'');return'<tr class="'+(e.pending?'lpend':'')+'"><td><input class="lei" type="date" value="'+e.date+'" onchange="updF('+e.id+',\'date\',this.value)"/></td><td style="display:flex;align-items:center;gap:3px;overflow:hidden"><input class="lei" type="text" value="'+e.desc.replace(/"/g,'&quot;')+'" onchange="updF('+e.id+',\'desc\',this.value)" style="flex:1;min-width:0"/>'+badge+'</td><td><select class="lese" onchange="updF('+e.id+',\'cat\',this.value)">'+co+'</select></td><td style="text-align:right;color:'+ac+'"><input class="lea" type="number" value="'+e.amt+'" min="0" step="0.01" onchange="updF('+e.id+',\'amt\',this.value)"/></td>'+extra+'<td style="text-align:center">'+mkPendBtn(e.id,e.pending)+'</td><td><button class="libtn" onclick="deleteE('+e.id+')" aria-label="Delete"><i class="ti ti-trash"></i></button></td></tr>';}
+// ── Main render ───────────────────────────────────────────────────────────────
+function render(){
+  var entries=ge();
+  var inc=entries.filter(function(e){return e.inc;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var card=entries.filter(function(e){return !e.inc&&e.pay==='card';}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var cash=entries.filter(function(e){return !e.inc&&e.pay==='cash';}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var cc=getCC(OFF),op=getOpen(OFF),nxtLbl=ml(OFF+1),prvLbl=OFF===0?'pre-existing':ml(OFF-1);
+  ['d','m'].forEach(function(s){document.getElementById('cc-lbl-'+s).textContent='— billed '+nxtLbl;document.getElementById('cc-nxt-'+s).textContent='billed '+nxtLbl;});
 
-function render(){var entries=ge();var inc=entries.filter(function(e){return e.inc;}).sort(function(a,b){return a.date.localeCompare(b.date);});var card=entries.filter(function(e){return !e.inc&&e.pay==='card';}).sort(function(a,b){return a.date.localeCompare(b.date);});var cash=entries.filter(function(e){return !e.inc&&e.pay==='cash';}).sort(function(a,b){return a.date.localeCompare(b.date);});var cc=getCC(OFF),op=getOpen(OFF),nxtLbl=ml(OFF+1),prvLbl=OFF===0?'pre-existing':ml(OFF-1);document.getElementById('cc-lbl').textContent='— billed '+nxtLbl;document.getElementById('cc-nxt').textContent='billed '+nxtLbl;var cl=OFF===0?'Starting balance':'Balance from '+ml(OFF-1);var ih='<tr class="lcarried"><td>—</td><td>'+cl+'</td><td>—</td><td style="text-align:right;color:var(--hint)">$'+fmt(op)+'</td><td></td><td></td></tr>';for(var i=0;i<inc.length;i++)ih+=editRow(inc[i],inc[i].pending?'var(--amber)':'var(--green)','');document.getElementById('inc-body').innerHTML=ih;if(card.length){var ch='';for(var i=0;i<card.length;i++){var e=card[i];var cb=e.cb>0?'<span class="lcb">+$'+fmt(e.cb)+'</span>':'<span style="color:var(--hint)">—</span>';ch+=editRow(e,'var(--blue)','<td style="text-align:right">'+cb+'</td>');}document.getElementById('card-body').innerHTML=ch;}else document.getElementById('card-body').innerHTML='<tr class="lempty"><td colspan="7">No card charges this month</td></tr>';if(cash.length){var hh='';for(var i=0;i<cash.length;i++)hh+=editRow(cash[i],'var(--red)','');document.getElementById('cash-body').innerHTML=hh;}else document.getElementById('cash-body').innerHTML='<tr class="lempty"><td colspan="6">No cash expenses this month</td></tr>';var bs=document.getElementById('bill-sec');if(cc>0){bs.style.display='block';var bd=OFF===0?'CC bill (pre-existing)':OFF===1?'CC bill (pre-existing $'+fmt(PRE)+' + June $'+fmt(r2(cc-PRE))+')':'CC bill ('+prvLbl+' charges)';document.getElementById('bill-lbl').textContent=OFF===1?'— pre-existing + June':'— '+prvLbl;document.getElementById('bill-body').innerHTML='<tr class="lbill"><td style="color:var(--hint)">'+mdp(OFF)+'-01</td><td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">'+bd+'</td><td style="text-align:right;font-weight:500;color:var(--red)">−$'+fmt(cc)+'</td></tr>';}else bs.style.display='none';var totR=0,totP=0,totC=0,totK=0,totCB=0;for(var i=0;i<entries.length;i++){var e=entries[i];if(e.inc){if(e.pending)totP+=e.amt;else totR+=e.amt;}else if(e.pay==='cash'&&!e.pending)totC+=e.amt;else if(e.pay==='card'&&!e.pending){totK+=e.amt;totCB+=e.cb;}}var exp=OFF===0?0:totC+cc,av=r2(op+totR),clos=r2(av-exp);document.getElementById('s-av').textContent='$'+fmt(av);document.getElementById('s-sub').textContent='prev $'+fmt(op)+' + $'+fmt(totR);var pnel=document.getElementById('s-pn');if(totP>0){pnel.style.display='block';pnel.textContent='+ pending $'+fmt(totP);}else pnel.style.display='none';document.getElementById('s-ex').textContent=exp>0?'-$'+fmt(exp):'$0.00';var bel=document.getElementById('s-bl');bel.textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos));bel.style.color=clos<0?'var(--red)':clos<200?'var(--amber)':'var(--text)';document.getElementById('s-cb').textContent='+$'+fmt(totCB);document.getElementById('tp-a').textContent='$'+fmt(av);document.getElementById('tp-e').textContent=exp>0?'-$'+fmt(exp):'$0';document.getElementById('tp-b').textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos));renderSP(clos,nextCC(OFF));renderBD(entries,op,OFF===0?0:cc,totP);var cimbHtml='';if(totK<500)cimbHtml='<div class="brow"><span class="blbl" style="color:var(--amber)">1% threshold</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(r2(500-totK))+' more needed</span></div>';else if(totK<1000)cimbHtml='<div class="brow"><span class="blbl">1% cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">Active ✓</span></div><div class="brow"><span class="blbl" style="color:var(--amber)">2% threshold</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(r2(1000-totK))+' more</span></div>';else cimbHtml='<div class="brow"><span class="blbl">2% cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">Unlocked ✓</span></div>';cimbHtml+='<div class="brow"><span class="blbl">Card charges</span><span style="font-size:10px;font-weight:500;color:var(--blue)">$'+fmt(totK)+'</span></div><div class="brow"><span class="blbl">Est. cashback</span><span style="font-size:10px;font-weight:500;color:var(--green)">+$'+fmt(totCB)+'</span></div>';document.getElementById('cimb-bd').innerHTML=cimbHtml;var ac=allCard(),sp=Math.min(100,Math.round(ac/STGT*100)),sr=Math.max(0,STGT-ac),bc=sp>=100?'var(--green)':sp>=60?'var(--amber)':'var(--blue)';document.getElementById('sam-bd').innerHTML='<div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:6px"><div style="height:100%;width:'+sp+'%;background:'+bc+';border-radius:3px;transition:width .3s"></div></div><div class="brow"><span class="blbl">Progress</span><span style="font-size:10px;font-weight:500;color:'+bc+'">'+sp+'%</span></div><div class="brow"><span class="blbl">Cumulative</span><span style="font-size:10px;font-weight:500;color:var(--text)">$'+fmt(ac)+'</span></div>'+(sr>0?'<div class="brow"><span class="blbl">Still needed</span><span style="font-size:10px;font-weight:500;color:var(--amber)">$'+fmt(sr)+'</span></div>':'<div class="brow"><span class="blbl">Status</span><span style="font-size:10px;font-weight:500;color:var(--green)">Unlocked! 🎉</span></div>');document.getElementById('bt-e').textContent=entries.length;document.getElementById('bt-s').textContent=sp+'%';document.getElementById('bt-c').textContent='+$'+fmt(totCB);}
+  // Log
+  var clbl=OFF===0?'Starting balance':'Balance from '+ml(OFF-1);
+  var ch='<div class="entry carried"><div class="entry-left"><div class="entry-desc" style="color:var(--hint);font-style:italic">'+clbl+'</div></div><div class="entry-right"><div class="entry-amount" style="color:var(--hint)">$'+fmt(op)+'</div></div></div>';
+  var incH=ch+(inc.length?inc.map(entryRow).join(''):'<div class="no-entries">No income entries</div>');
+  var cardH=card.length?card.map(entryRow).join(''):'<div class="no-entries">No card charges</div>';
+  var cashH=cash.length?cash.map(entryRow).join(''):'<div class="no-entries">No cash expenses</div>';
+  ['log-inc-d','log-inc-m'].forEach(function(id){document.getElementById(id).innerHTML=incH;});
+  ['log-card-d','log-card-m'].forEach(function(id){document.getElementById(id).innerHTML=cardH;});
+  ['log-cash-d','log-cash-m'].forEach(function(id){document.getElementById(id).innerHTML=cashH;});
 
-// Keyboard support for PIN
+  // CC Bill
+  var billHtml='<div class="bill-row"><span style="font-size:12px;color:var(--muted)">'+(OFF===0?'Pre-existing':OFF===1?'Pre-existing $'+fmt(PRE)+' + June $'+fmt(r2(cc-PRE)):'Previous charges')+'</span><span style="font-size:15px;font-weight:600;color:var(--red)">−$'+fmt(cc)+'</span></div>';
+  var billLbl=OFF===1?'— pre-existing + June':'— '+prvLbl;
+  ['d','m'].forEach(function(s){var bc=document.getElementById('bill-card-'+s);if(cc>0){bc.style.display='block';document.getElementById('bill-lbl-'+s).textContent=billLbl;document.getElementById('bill-content-'+s).innerHTML=billHtml;}else bc.style.display='none';});
+
+  // Totals
+  var totR=0,totP=0,totC=0,totK=0,totCB=0;
+  for(var i=0;i<entries.length;i++){var e=entries[i];if(e.inc){if(e.pending)totP+=e.amt;else totR+=e.amt;}else if(e.pay==='cash'&&!e.pending)totC+=e.amt;else if(e.pay==='card'&&!e.pending){totK+=e.amt;totCB+=e.cb;}}
+  var exp=OFF===0?0:totC+cc,av=r2(op+totR),clos=r2(av-exp),ncBill=nCC(OFF),sp=r2(clos-ncBill);
+  var col=sp<0?'var(--red)':sp<200?'var(--amber)':sp<500?'var(--amber)':'var(--green)';
+  var spMsg=sp<0?"⚠ Can't cover CC bill ($"+fmt(ncBill)+") — $"+fmt(Math.abs(sp))+" short.":sp<200?"Very tight — $"+fmt(sp)+" left after reserving $"+fmt(ncBill)+".":sp<500?"Watch it — $"+fmt(sp)+" free after $"+fmt(ncBill)+" reserved.":"Good — $"+fmt(sp)+" spendable after reserving $"+fmt(ncBill)+".";
+  var balCol=clos<0?'var(--red)':clos<200?'var(--amber)':'var(--text)';
+  var pct=sp<=0?0:Math.min(100,Math.round(sp/Math.max(clos,1)*100));
+
+  ['d','m'].forEach(function(s){
+    document.getElementById('sp-v'+(s==='d'?'':'-m')).textContent=(sp<0?'-$':'$')+fmt(Math.abs(sp));
+    document.getElementById('sp-v'+(s==='d'?'':'-m')).style.color=col;
+    document.getElementById('sp-s-'+s).textContent=spMsg;document.getElementById('sp-s-'+s).style.color=col;
+    document.getElementById('sp-wrap'+(s==='m'?'-m':'')).style.borderLeftColor=col;
+    document.getElementById('sp-f-'+s).style.width=pct+'%';document.getElementById('sp-f-'+s).style.background=col;
+    document.getElementById('sp-mx-'+s).textContent='Closing $'+fmt(clos);
+    document.getElementById('s-bl-'+s).textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos));document.getElementById('s-bl-'+s).style.color=balCol;
+    document.getElementById('s-av-'+s).textContent='$'+fmt(av);
+    document.getElementById('s-sub-'+s).textContent='prev $'+fmt(op)+' + $'+fmt(totR);
+    var pn=document.getElementById('s-pn-'+s);if(totP>0){pn.style.display='block';pn.textContent='+ pending $'+fmt(totP);}else pn.style.display='none';
+    document.getElementById('s-ex-'+s).textContent=exp>0?'-$'+fmt(exp):'$0.00';
+  });
+  document.getElementById('tp-a').textContent='$'+fmt(av);
+  document.getElementById('tp-e').textContent=exp>0?'-$'+fmt(exp):'$0';
+  document.getElementById('tp-b').textContent=(clos<0?'-$':'$')+fmt(Math.abs(clos));
+
+  renderBD('d',entries,op,OFF===0?0:cc,totP);
+  renderBD('m',entries,op,OFF===0?0:cc,totP);
+
+  // CIMB
+  var ch2='';if(totK<500)ch2='<div class="brow"><span class="blbl" style="color:var(--amber)">Needs $'+fmt(r2(500-totK))+' more</span><span style="font-size:11px;color:var(--amber)">for 1%</span></div>';else if(totK<1000)ch2='<div class="brow"><span class="blbl">1% active</span><span style="font-size:11px;color:var(--green)">✓</span></div><div class="brow"><span class="blbl" style="color:var(--amber)">Needs $'+fmt(r2(1000-totK))+' more</span><span style="font-size:11px;color:var(--amber)">for 2%</span></div>';else ch2='<div class="brow"><span class="blbl">2% cashback</span><span style="font-size:11px;color:var(--green)">Unlocked ✓</span></div>';ch2+='<div class="brow"><span class="blbl">Est. cashback</span><span style="font-size:11px;font-weight:500;color:var(--green)">+$'+fmt(totCB)+'</span></div>';
+  document.getElementById('cimb-d').innerHTML=ch2;document.getElementById('cimb-m').innerHTML=ch2;
+
+  // Samsonite
+  var ac=allCard(),spc=Math.min(100,Math.round(ac/STGT*100)),sr=Math.max(0,STGT-ac),bc=spc>=100?'var(--green)':spc>=60?'var(--amber)':'var(--blue)';
+  var samH='<div class="prog"><div class="prog-fill" style="width:'+spc+'%;background:'+bc+'"></div></div><div class="brow"><span class="blbl">Progress</span><span style="font-size:11px;font-weight:500;color:'+bc+'">'+spc+'% ($'+fmt(ac)+')</span></div>'+(sr>0?'<div class="brow"><span class="blbl">Still needed</span><span style="font-size:11px;color:var(--amber)">$'+fmt(sr)+'</span></div>':'<div class="brow"><span class="blbl">Status</span><span style="font-size:11px;color:var(--green)">Target reached! 🎉</span></div>');
+  document.getElementById('sam-d').innerHTML=samH;document.getElementById('sam-m').innerHTML=samH;
+}
+
+// Keyboard PIN
 document.addEventListener('keydown',function(e){
-  if(document.getElementById('pin-screen').style.display==='none') return;
-  if(e.key>='0'&&e.key<='9') pinKey(e.key);
-  else if(e.key==='Backspace') pinDel();
-  else if(e.key==='Enter'&&pinBuffer.length===4) submitPin();
+  if(document.getElementById('pin-screen').style.display==='none')return;
+  if(e.key>='0'&&e.key<='9')pk(e.key);else if(e.key==='Backspace')pd();
 });
 </script>
 </body>
