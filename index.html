@@ -101,13 +101,19 @@ html,body{min-height:100%;background:var(--bg2);font-family:-apple-system,BlinkM
 .btot{display:flex;justify-content:space-between;align-items:center;padding:7px 0 0;margin-top:3px;border-top:0.5px solid var(--border)}
 
 /* ── WALLET ── */
-.wallet-row{display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border2)}
+.wallet-row{display:flex;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border2);gap:8px}
 .wallet-row:last-child{border-bottom:none}
-.wallet-icon{width:28px;height:28px;background:var(--panel2);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-right:10px;flex-shrink:0;font-size:13px;color:var(--muted)}
-.wallet-name{font-size:13px;color:var(--muted);flex:1}
-.wallet-input{background:none;border:none;color:var(--text);font-size:15px;font-weight:500;text-align:right;width:110px;outline:none;-moz-appearance:textfield;padding:2px 0}
-.wallet-input::-webkit-outer-spin-button,.wallet-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.wallet-icon{width:28px;height:28px;background:var(--panel2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:var(--muted)}
+.wallet-name-input{background:none;border:none;color:var(--muted);font-size:13px;flex:1;outline:none;min-width:0;padding:0}
+.wallet-name-input:focus{color:var(--text);border-bottom:0.5px solid var(--border)}
+.wallet-name-input::placeholder{color:var(--hint)}
+.wallet-bal-input{background:none;border:none;color:var(--text);font-size:15px;font-weight:500;text-align:right;width:100px;outline:none;-moz-appearance:textfield;padding:2px 0;flex-shrink:0}
+.wallet-bal-input::-webkit-outer-spin-button,.wallet-bal-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.wallet-del-btn{background:none;border:none;cursor:pointer;color:var(--hint);padding:2px 4px;font-size:14px;flex-shrink:0;border-radius:5px}
+.wallet-del-btn:hover{color:var(--red);background:rgba(239,68,68,0.12)}
 .wallet-total{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;margin-top:4px;border-top:0.5px solid var(--border)}
+.wallet-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:none;border:0.5px dashed var(--border);border-radius:9px;color:var(--hint);font-size:12px;padding:9px;width:100%;cursor:pointer;margin-top:8px;transition:all .15s}
+.wallet-add-btn:hover{border-color:var(--blue);color:var(--blue)}
 
 /* ── ADD FORM ── */
 .form-group{margin-bottom:10px}
@@ -292,12 +298,7 @@ select option{background:#0b1640;color:#fff}
       <!-- Wallets -->
       <div class="card">
         <div class="card-title"><i class="ti ti-wallet" style="color:var(--blue)"></i>Current balances</div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-building-bank"></i></div><span class="wallet-name">DBS Bank</span><input class="wallet-input" type="number" id="w0" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-cash"></i></div><span class="wallet-name">Cash</span><input class="wallet-input" type="number" id="w1" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut (main)</span><input class="wallet-input" type="number" id="w2" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w2</span><input class="wallet-input" type="number" id="w3" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w3</span><input class="wallet-input" type="number" id="w4" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
-        <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w4</span><input class="wallet-input" type="number" id="w5" step="0.01" oninput="updateW()" inputmode="decimal"/></div>
+        <div id="wallet-list-d"></div>
         <div class="wallet-total"><span style="font-size:13px;color:var(--muted);font-weight:500">Total</span><span style="font-size:17px;font-weight:600;color:var(--green)" id="w-tot">$0.00</span></div>
       </div>
 
@@ -406,12 +407,7 @@ select option{background:#0b1640;color:#fff}
   <div class="mobile-view" id="mv-wallet">
     <div class="card">
       <div class="card-title"><i class="ti ti-wallet" style="color:var(--blue)"></i>Current balances</div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-building-bank"></i></div><span class="wallet-name">DBS Bank</span><input class="wallet-input" type="number" id="mw0" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-cash"></i></div><span class="wallet-name">Cash</span><input class="wallet-input" type="number" id="mw1" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut (main)</span><input class="wallet-input" type="number" id="mw2" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w2</span><input class="wallet-input" type="number" id="mw3" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w3</span><input class="wallet-input" type="number" id="mw4" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
-      <div class="wallet-row"><div class="wallet-icon"><i class="ti ti-credit-card"></i></div><span class="wallet-name">Revolut w4</span><input class="wallet-input" type="number" id="mw5" step="0.01" oninput="updateWM()" inputmode="decimal"/></div>
+      <div id="wallet-list-m"></div>
       <div class="wallet-total"><span style="font-size:13px;color:var(--muted);font-weight:500">Total</span><span style="font-size:17px;font-weight:600;color:var(--green)" id="mw-tot">$0.00</span></div>
     </div>
     <button onclick="resetData()" style="background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--red);font-size:13px;padding:13px;width:100%;cursor:pointer">Reset all data to defaults</button>
@@ -455,14 +451,20 @@ async function doPin(){
   }
 }
 function setSync(s){var d=document.getElementById('sync-dot');d.className='sync-dot'+(s==='syncing'?' syncing':s==='err'?' err':'');}
-async function save(){if(!RID)return;setSync('syncing');var p={OFF:OFF,NID:NID,MD:MD,wallets:[0,1,2,3,4,5].map(function(i){return parseFloat(document.getElementById('w'+i).value)||0;})};var r=await sb.from('budget_data').upsert({user_id:RID,data:p,updated_at:new Date().toISOString()},{onConflict:'user_id'});setSync(r.error?'err':'ok');}
+async function save(){if(!RID)return;setSync('syncing');var p={OFF:OFF,NID:NID,MD:MD,WALLETS:WALLETS};var r=await sb.from('budget_data').upsert({user_id:RID,data:p,updated_at:new Date().toISOString()},{onConflict:'user_id'});setSync(r.error?'err':'ok');}
 function sched(){clearTimeout(saveTimer);saveTimer=setTimeout(save,800);}
 async function unlock(hash){
   RID=hash.slice(0,8)+'-'+hash.slice(8,12)+'-'+hash.slice(12,16)+'-'+hash.slice(16,20)+'-'+hash.slice(20,32);
   setSync('syncing');
   var r=await sb.from('budget_data').select('data').eq('user_id',RID).maybeSingle();
-  if(r.data&&r.data.data){var s=r.data.data;OFF=s.OFF||0;NID=s.NID||1;MD=s.MD||{};if(s.wallets){s.wallets.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});}}
-  else{seedDefaults();W_DEF.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});await save();}
+  if(r.data&&r.data.data){
+    var s=r.data.data;OFF=s.OFF||0;NID=s.NID||1;MD=s.MD||{};
+    if(s.WALLETS&&s.WALLETS.length) WALLETS=s.WALLETS;
+    else if(s.wallets) WALLETS=s.wallets.map(function(v,i){return{name:W_DEF_NAMES[i]||'Wallet '+(i+1),bal:v};});
+  } else {
+    seedDefaults();
+    await save();
+  }
   setSync('ok');
   document.getElementById('pin-screen').style.display='none';
   document.getElementById('app').className='app visible';
@@ -471,7 +473,7 @@ async function unlock(hash){
   document.getElementById('prev-btn').disabled=(OFF===0);
   document.getElementById('f-dt').value=mdp(OFF)+'-01';
   document.getElementById('mf-dt').value=mdp(OFF)+'-01';
-  updateW();render();
+  renderWallets();render();
 }
 function lockApp(){document.getElementById('pin-screen').style.display='flex';document.getElementById('app').className='app';pinBuf='';pinMode='enter';updDots(0,'');document.getElementById('pin-sub').textContent='Enter your PIN to unlock';document.getElementById('pin-note').style.display='none';document.getElementById('pin-msg').textContent='';}
 
@@ -485,7 +487,10 @@ var CLBL={salary:'Salary',reimbursement:'Reimbursement',govt:'Govt payout',housi
 var MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 var STGT=2000,JO=834.80,PRE=483.64;
 var MCFG=[{wd:11,dr:2,subs:126.47,tr:0,ph:false},{wd:22,dr:0,subs:248.78,tr:2.50,ph:true},{wd:20,dr:0,subs:248.78,tr:2.50,ph:true}];
-var W_DEF=[202.70,4.00,39.83,170.53,2.47,415.27];
+var W_DEF_NAMES=['DBS Bank','Cash','Revolut (main)','Revolut w2','Revolut w3','Revolut w4'];
+var W_DEF_BALS=[202.70,4.00,39.83,170.53,2.47,415.27];
+// Dynamic wallet array — each entry: {name, bal}
+var WALLETS=W_DEF_NAMES.map(function(n,i){return{name:n,bal:W_DEF_BALS[i]};});
 var OFF=0,MD={},NID=1,expandId=null;
 
 function r2(n){return Math.round(n*100)/100;}
@@ -504,9 +509,41 @@ mk([{date:'2026-06-18',desc:"Friend reimb. (Nando's 18/6)",cat:'reimbursement',p
 mk([{date:'2026-07-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},{date:'2026-07-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},{date:'2026-07-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false},{date:'2026-07-05',desc:'Medicine bill',cat:'health',pay:'card',amt:233.40,inc:false,pending:false},{date:'2026-07-10',desc:'Shopee bill',cat:'others',pay:'cash',amt:600,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (1st)',cat:'insurance',pay:'cash',amt:125.72,inc:false,pending:false},{date:'2026-07-01',desc:'Insurance (2nd)',cat:'insurance',pay:'cash',amt:300,inc:false,pending:false},{date:'2026-07-25',desc:"Doctor's appt",cat:'health',pay:'card',amt:63.80,inc:false,pending:false},{date:'2026-07-25',desc:'Lab test',cat:'health',pay:'card',amt:346.80,inc:false,pending:false}],'M1',1);
 mk([{date:'2026-08-01',desc:'Salary',cat:'salary',pay:'na',amt:2400,inc:true,pending:false},{date:'2026-08-01',desc:'Work reimbursement',cat:'reimbursement',pay:'na',amt:71.02,inc:true,pending:false},{date:'2026-08-01',desc:'Govt payout',cat:'govt',pay:'na',amt:18,inc:true,pending:false}],'M2',2);}
 
-// ── Wallet sync desktop↔mobile ────────────────────────────────────────────────
-function updateW(){var t=0;for(var i=0;i<6;i++){var v=parseFloat(document.getElementById('w'+i).value)||0;t+=v;document.getElementById('mw'+i).value=v;}document.getElementById('w-tot').textContent='$'+fmt(t);document.getElementById('mw-tot').textContent='$'+fmt(t);sched();}
-function updateWM(){var t=0;for(var i=0;i<6;i++){var v=parseFloat(document.getElementById('mw'+i).value)||0;t+=v;document.getElementById('w'+i).value=v;}document.getElementById('w-tot').textContent='$'+fmt(t);document.getElementById('mw-tot').textContent='$'+fmt(t);sched();}
+// ── Wallet rendering ──────────────────────────────────────────────────────────
+function walletIcon(name){
+  var n=name.toLowerCase();
+  if(n.indexOf('dbs')>=0||n.indexOf('ocbc')>=0||n.indexOf('uob')>=0||n.indexOf('bank')>=0) return 'ti-building-bank';
+  if(n.indexOf('cash')>=0) return 'ti-cash';
+  if(n.indexOf('grab')>=0) return 'ti-brand-grab';
+  if(n.indexOf('paypal')>=0) return 'ti-brand-paypal';
+  return 'ti-credit-card';
+}
+function renderWallets(){
+  var tot=WALLETS.reduce(function(s,w){return s+w.bal;},0);
+  ['d','m'].forEach(function(sfx){
+    var el=document.getElementById('wallet-list-'+sfx);
+    if(!el) return;
+    var html=WALLETS.map(function(w,i){
+      return'<div class="wallet-row">'+
+        '<div class="wallet-icon"><i class="ti '+walletIcon(w.name)+'"></i></div>'+
+        '<input class="wallet-name-input" type="text" value="'+w.name.replace(/"/g,'&quot;')+'" placeholder="Wallet name" oninput="updWName('+i+',this.value)" onblur="sched()"/>'+
+        '<input class="wallet-bal-input" type="number" value="'+w.bal+'" step="0.01" inputmode="decimal" oninput="updWBal('+i+',this.value)"/>'+
+        '<button class="wallet-del-btn" onclick="delWallet('+i+')" title="Remove wallet"><i class="ti ti-trash"></i></button>'+
+      '</div>';
+    }).join('')+
+    '<button class="wallet-add-btn" onclick="addWallet()"><i class="ti ti-plus" style="font-size:13px"></i>Add wallet</button>';
+    el.innerHTML=html;
+  });
+  document.getElementById('w-tot').textContent='$'+fmt(tot);
+  document.getElementById('mw-tot').textContent='$'+fmt(tot);
+}
+function updWName(i,v){if(WALLETS[i]){WALLETS[i].name=v;}sched();}
+function updWBal(i,v){if(WALLETS[i]){var n=parseFloat(v)||0;WALLETS[i].bal=n;var tot=WALLETS.reduce(function(s,w){return s+w.bal;},0);document.getElementById('w-tot').textContent='$'+fmt(tot);document.getElementById('mw-tot').textContent='$'+fmt(tot);}sched();}
+function addWallet(){WALLETS.push({name:'New wallet',bal:0});renderWallets();sched();}
+function delWallet(i){if(WALLETS.length<=1){alert('You need at least one wallet.');return;}WALLETS.splice(i,1);renderWallets();sched();}
+// Legacy alias so any remaining callers don't break
+function updateW(){renderWallets();sched();}
+function updateWM(){renderWallets();sched();}
 
 function toggleExpand(id){expandId=(expandId===id?null:id);render();}
 function togglePending(id){var e=ge().find(function(x){return x.id===id;});if(e){e.pending=!e.pending;render();sched();}}
@@ -521,7 +558,7 @@ document.getElementById('mf-cat').addEventListener('change',function(){document.
 function doAdd(dt,ds,cat,pay,amt,st){if(!dt||!ds||isNaN(amt)||amt<=0)return false;var inc=ICATS.has(cat),r=(pay==='card'&&!inc&&CBR[cat])?CBR[cat]:0;ge().push({id:NID++,date:dt,desc:ds,cat:cat,pay:inc?'na':pay,amt:amt,inc:inc,pending:st==='pending',est:false,rec:false,cb:r>0?r2(amt*r/100):0});return true;}
 function addEntry(){if(doAdd(document.getElementById('f-dt').value,document.getElementById('f-ds').value.trim(),document.getElementById('f-cat').value,document.getElementById('f-pay').value,parseFloat(document.getElementById('f-am').value),document.getElementById('f-st').value)){document.getElementById('f-ds').value='';document.getElementById('f-am').value='';render();sched();}}
 function addEntryM(){if(doAdd(document.getElementById('mf-dt').value,document.getElementById('mf-ds').value.trim(),document.getElementById('mf-cat').value,document.getElementById('mf-pay').value,parseFloat(document.getElementById('mf-am').value),document.getElementById('mf-st').value)){document.getElementById('mf-ds').value='';document.getElementById('mf-am').value='';render();sched();showMV('log');}}
-async function resetData(){if(!confirm('Reset all data to defaults?'))return;OFF=0;NID=1;MD={};seedDefaults();W_DEF.forEach(function(v,i){document.getElementById('w'+i).value=v;document.getElementById('mw'+i).value=v;});updateW();document.getElementById('mon-lbl').textContent=ml(0);document.getElementById('prev-btn').disabled=true;document.getElementById('f-dt').value=mdp(0)+'-01';document.getElementById('mf-dt').value=mdp(0)+'-01';expandId=null;render();await save();}
+async function resetData(){if(!confirm('Reset all data to defaults?'))return;OFF=0;NID=1;MD={};WALLETS=W_DEF_NAMES.map(function(n,i){return{name:n,bal:W_DEF_BALS[i]};});seedDefaults();renderWallets();document.getElementById('mon-lbl').textContent=ml(0);document.getElementById('prev-btn').disabled=true;document.getElementById('f-dt').value=mdp(0)+'-01';document.getElementById('mf-dt').value=mdp(0)+'-01';expandId=null;render();await save();}
 
 function allCard(){var t=PRE;for(var i=0;i<=2;i++){var en=MD[gk(i)]||[];for(var j=0;j<en.length;j++){if(!en[j].inc&&en[j].pay==='card'&&!en[j].pending)t+=en[j].amt;}}return t;}
 
