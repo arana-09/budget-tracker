@@ -330,7 +330,7 @@ select option{background:#0b1640;color:#fff}
           <div class="form-group" style="margin-bottom:0"><span class="form-label">Payment</span><select id="f-pay" class="form-select"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
         </div>
         <div class="form-row-2">
-          <div><span class="form-label">Status</span><select id="f-st" class="form-select"><option value="received">Received</option><option value="pending">Pending</option></select></div>
+          <div><span class="form-label">Status</span><select id="f-st" class="form-select"><option value="confirmed">Confirmed</option><option value="pending">Pending</option></select></div>
           <div style="display:flex;align-items:flex-end"><button onclick="addEntry()" class="add-btn" style="margin-top:0"><i class="ti ti-plus" style="font-size:15px"></i>Add entry</button></div>
         </div>
       </div>
@@ -388,7 +388,7 @@ select option{background:#0b1640;color:#fff}
         </div>
         <div class="form-group" style="margin-bottom:0"><span class="form-label">Payment</span><select id="mf-pay" class="form-select"><option value="card">Credit card</option><option value="cash">Cash</option><option value="na">N/A (income)</option></select></div>
       </div>
-      <div class="form-group"><span class="form-label">Status</span><select id="mf-st" class="form-select"><option value="received">Received</option><option value="pending">Pending</option></select></div>
+      <div class="form-group"><span class="form-label">Status</span><select id="mf-st" class="form-select"><option value="confirmed">Confirmed</option><option value="pending">Pending</option></select></div>
       <button onclick="addEntryM()" class="add-btn"><i class="ti ti-plus" style="font-size:15px"></i>Add entry</button>
     </div>
   </div>
@@ -426,6 +426,18 @@ select option{background:#0b1640;color:#fff}
 </div><!-- /app -->
 
 <script>
+// ── Constants (declared first so all functions can reference them) ─────────────
+var ICATS=new Set(['salary','reimbursement','govt']);
+var CBR={dining:2,subscriptions:2,entertainment:2};
+var CLBL={salary:'Salary',reimbursement:'Reimbursement',govt:'Govt payout',housing:'Housing',groceries:'Groceries',transport:'Transport',dining:'Dining',health:'Health',subscriptions:'Subscriptions',clothing:'Clothing',entertainment:'Entertainment',insurance:'Insurance',savings:'Savings',others:'Others'};
+var MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var STGT=2000,JO=834.80,PRE=483.64;
+var MCFG=[{wd:11,dr:2,subs:126.47,tr:0,ph:false},{wd:22,dr:0,subs:248.78,tr:2.50,ph:true},{wd:20,dr:0,subs:248.78,tr:2.50,ph:true}];
+var W_DEF_NAMES=['DBS Bank','Cash','Revolut (main)','Revolut w2','Revolut w3','Revolut w4'];
+var W_DEF_BALS=[202.70,4.00,39.83,170.53,2.47,415.27];
+var WALLETS=W_DEF_NAMES.map(function(n,i){return{name:n,bal:W_DEF_BALS[i]};});
+var OFF=0,MD={},NID=1,expandId=null;
+
 // ── Supabase ─────────────────────────────────────────────────────────────────
 var SURL='https://jwbwmevrsiwtzwyahlbc.supabase.co';
 var SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3YndtZXZyc2l3dHp3eWFobGJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU1MzEsImV4cCI6MjA5NjkzMTUzMX0.34k0MMNHrMH6BOtAX1Xt_BJxrIQqMO7jGml6Qo1TSh0';
@@ -479,19 +491,6 @@ function lockApp(){document.getElementById('pin-screen').style.display='flex';do
 
 // ── Mobile view nav ───────────────────────────────────────────────────────────
 function showMV(v){['home','add','log','wallet'].forEach(function(n){document.getElementById('mv-'+n).classList.toggle('active',n===v);document.getElementById('nav-'+n).classList.toggle('active',n===v);});}
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-var ICATS=new Set(['salary','reimbursement','govt']);
-var CBR={dining:2,subscriptions:2,entertainment:2};
-var CLBL={salary:'Salary',reimbursement:'Reimbursement',govt:'Govt payout',housing:'Housing',groceries:'Groceries',transport:'Transport',dining:'Dining',health:'Health',subscriptions:'Subscriptions',clothing:'Clothing',entertainment:'Entertainment',insurance:'Insurance',savings:'Savings',others:'Others'};
-var MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
-var STGT=2000,JO=834.80,PRE=483.64;
-var MCFG=[{wd:11,dr:2,subs:126.47,tr:0,ph:false},{wd:22,dr:0,subs:248.78,tr:2.50,ph:true},{wd:20,dr:0,subs:248.78,tr:2.50,ph:true}];
-var W_DEF_NAMES=['DBS Bank','Cash','Revolut (main)','Revolut w2','Revolut w3','Revolut w4'];
-var W_DEF_BALS=[202.70,4.00,39.83,170.53,2.47,415.27];
-// Dynamic wallet array — each entry: {name, bal}
-var WALLETS=W_DEF_NAMES.map(function(n,i){return{name:n,bal:W_DEF_BALS[i]};});
-var OFF=0,MD={},NID=1,expandId=null;
 
 function r2(n){return Math.round(n*100)/100;}
 function gk(o){return'M'+o;}
@@ -574,7 +573,7 @@ function entryRow(e){
     '<div class="expand-grid"><div><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Date</span><input class="expand-input" type="date" value="'+e.date+'" onchange="updF('+e.id+',\'date\',this.value)"/></div><div><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Amount ($)</span><input class="expand-input" type="number" value="'+e.amt+'" step="0.01" inputmode="decimal" onchange="updF('+e.id+',\'amt\',this.value)"/></div></div>'+
     '<div style="margin-bottom:8px"><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Description</span><input class="expand-input" type="text" value="'+e.desc.replace(/"/g,'&quot;')+'" onchange="updF('+e.id+',\'desc\',this.value)" style="width:100%"/></div>'+
     '<div style="margin-bottom:8px"><span style="font-size:10px;color:var(--hint);display:block;margin-bottom:3px">Category</span><select class="expand-select" onchange="updF('+e.id+',\'cat\',this.value)">'+catOpts+'</select></div>'+
-    '<div class="expand-actions"><button class="pend-btn'+(e.pending?' on':'')+'" onclick="togglePending('+e.id+')">'+(e.pending?'Mark as received':'Mark as pending')+'</button><button class="del-btn" onclick="deleteE('+e.id+')"><i class="ti ti-trash"></i>Delete</button></div>'+
+    '<div class="expand-actions"><button class="pend-btn'+(e.pending?' on':'')+'" onclick="togglePending('+e.id+')">'+(e.pending?'Mark confirmed':'Mark pending')+'</button><button class="del-btn" onclick="deleteE('+e.id+')"><i class="ti ti-trash"></i>Delete</button></div>'+
   '</div>':'';
   return'<div><div class="entry" onclick="toggleExpand('+e.id+')"><div class="entry-left"><div class="entry-desc">'+e.desc+badge+'</div><div class="entry-meta">'+e.date+' · '+tag+'</div></div><div class="entry-right"><div class="entry-amount" style="color:'+ac+'">'+(e.inc?'+':e.pay==='card'?'':'-')+'$'+fmt(e.amt)+'</div>'+cb+'</div></div>'+exp+'</div>';
 }
