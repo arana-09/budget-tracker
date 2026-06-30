@@ -815,7 +815,102 @@ function editGoal(id){openGoal(id);}
 function delGoal(id){S.goals=S.goals.filter(g=>g.id!==id);render();}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingId)cancelEdit();});
-render();
+
+// ════════════════════════════════
+// SUPABASE PERSISTENCE
+// ════════════════════════════════
+const SUPABASE_URL = 'https://jwbwmevrsiwtzwyahlbc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3YndtZXZyc2l3dHp3eWFobGJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU1MzEsImV4cCI6MjA5NjkzMTUzMX0.34k0MMNHrMH6BOtAX1Xt_BJxrIQqMO7jGml6Qo1TSh0';
+const FIXED_ROW_ID = '00000000-0000-0000-0000-000000000001'; // single-row storage since there's no auth
+
+let saveTimer = null;
+let isLoading = true;
+
+function showSaveStatus(text, color){
+  let badge = document.getElementById('save-status');
+  if(!badge){
+    badge = document.createElement('div');
+    badge.id = 'save-status';
+    badge.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:999;font-family:Inter,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:5px 10px;border-radius:20px;transition:all 0.3s;pointer-events:none;';
+    document.body.appendChild(badge);
+  }
+  badge.textContent = text;
+  badge.style.background = color === 'green' ? 'rgba(0,232,122,0.18)' : color === 'red' ? 'rgba(255,77,77,0.18)' : 'rgba(255,170,0,0.18)';
+  badge.style.color = color === 'green' ? '#00e87a' : color === 'red' ? '#ff4d4d' : '#ffaa00';
+  badge.style.border = '1px solid ' + (color === 'green' ? 'rgba(0,232,122,0.4)' : color === 'red' ? 'rgba(255,77,77,0.4)' : 'rgba(255,170,0,0.4)');
+}
+
+async function loadFromSupabase(){
+  showSaveStatus('Loading…','amber');
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/budget_data?id=eq.${FIXED_ROW_ID}&select=data`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if(!res.ok) throw new Error('Load failed: '+res.status);
+    const rows = await res.json();
+    if(rows.length && rows[0].data){
+      const loaded = rows[0].data;
+      // merge loaded state into S, keeping defaults for any missing fields
+      S = Object.assign({}, S, loaded);
+      showSaveStatus('Loaded','green');
+    } else {
+      showSaveStatus('No saved data yet','amber');
+    }
+  } catch(err){
+    console.error('Supabase load error:', err);
+    showSaveStatus('Load failed — using local','red');
+  }
+  isLoading = false;
+  render();
+  setTimeout(()=>{ const b=document.getElementById('save-status'); if(b) b.style.opacity='0.3'; }, 2000);
+}
+
+async function saveToSupabase(){
+  if(isLoading) return; // don't save while still loading initial data
+  showSaveStatus('Saving…','amber');
+  const payload = {
+    id: FIXED_ROW_ID,
+    user_id: FIXED_ROW_ID,
+    data: S,
+    updated_at: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/budget_data?on_conflict=id`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('Save failed: '+res.status);
+    showSaveStatus('Saved ✓','green');
+  } catch(err){
+    console.error('Supabase save error:', err);
+    showSaveStatus('Save failed','red');
+  }
+  setTimeout(()=>{ const b=document.getElementById('save-status'); if(b) b.style.opacity='0.3'; }, 1500);
+}
+
+function queueSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToSupabase, 800); // debounce rapid changes
+}
+
+// Wrap render() to trigger a debounced save after every state change
+const _originalRender = render;
+render = function(){
+  _originalRender();
+  queueSave();
+};
+
+// Kick off initial load, then render
+loadFromSupabase();
 </script>
 </body>
 </html>
