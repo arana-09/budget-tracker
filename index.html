@@ -601,9 +601,10 @@ function rWallets(){
 }
 function deskWallet(w){
   if(editingWalletId===w.id){
-    return`<div class="wallet-row">
-      <input class="wallet-name-input" id="wn-${w.id}" value="${w.name}" onblur="saveWallet('${w.id}')" onkeydown="if(event.key==='Enter')saveWallet('${w.id}')">
-      <input class="wallet-amt-input" id="wa-${w.id}" type="number" value="${w.amount}" step="0.01" onblur="saveWallet('${w.id}')" onkeydown="if(event.key==='Enter')saveWallet('${w.id}')">
+    return`<div class="wallet-row" style="flex-wrap:wrap;gap:5px">
+      <input class="wallet-name-input" id="wn-${w.id}" value="${w.name}" placeholder="Name" onkeydown="if(event.key==='Enter')saveWallet('${w.id}')" style="border-bottom:1px solid var(--b2);padding-bottom:1px">
+      <input class="wallet-amt-input" id="wa-${w.id}" type="number" value="${w.amount||''}" step="0.01" placeholder="0.00" onkeydown="if(event.key==='Enter')saveWallet('${w.id}')" style="border-bottom:1px solid var(--gbdr);padding-bottom:1px">
+      <button class="btn btn-g btn-xs" onclick="saveWallet('${w.id}')">Save</button>
       <button class="icon-btn del" onclick="removeWallet('${w.id}')">✕</button>
     </div>`;
   }
