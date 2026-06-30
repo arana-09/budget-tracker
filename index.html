@@ -873,7 +873,7 @@ async function saveToSupabase(){
   showSaveStatus('Saving…','amber');
   const payload = {
     id: FIXED_ROW_ID,
-    user_id: FIXED_ROW_ID,
+    user_id: null,
     data: S,
     updated_at: new Date().toISOString()
   };
