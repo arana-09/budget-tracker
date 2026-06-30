@@ -165,9 +165,9 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 .tcol:last-child { border-right: none; }
 .tcol-hdr { padding: 8px 12px; border-bottom: 1px solid var(--b); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .tcol-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
-.tcol-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.tcol-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-height: 26px; justify-content: center; }
 .tcol-total { font-size: 13px; font-weight: 900; }
-.tcol-pending { font-size: 9px; font-weight: 600; color: var(--amber); }
+.tcol-pending { font-size: 9px; font-weight: 600; color: var(--amber); min-height: 11px; }
 .add-row-btn { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--b2); background: rgba(255,255,255,0.08); color: var(--dim2); font-family: var(--font); font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
 .add-row-btn:hover { background: rgba(255,255,255,0.16); color: var(--w); }
 .tcol-list { flex: 1; overflow-y: auto; }
@@ -324,6 +324,10 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
       </div>
       <div class="btrack"><div class="bfill" id="d-bar" style="width:0%"></div></div>
       <div class="blbls"><span>$0</span><span id="d-bar-lbl">$1,000 limit</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span class="lbl" style="font-size:8px">Opening balance: <span id="d-carry-val" style="color:var(--ow)">$0</span></span>
+        <button class="btn btn-xs" onclick="editCarry()">Edit</button>
+      </div>
     </div>
     <div id="sb-wallets">
       <div class="w-hdr">
@@ -417,6 +421,7 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
           <input class="mob-lim-in" type="number" id="m-lim-in" value="1000" oninput="updLim('m')">
         </div>
         <div class="btrack" style="width:70px"><div class="bfill" id="m-bar" style="width:0%"></div></div>
+        <button class="btn btn-xs" style="padding:2px 6px;font-size:8px" onclick="editCarry()">Edit Balance</button>
       </div>
     </div>
     <div id="mob-goals">
@@ -520,7 +525,7 @@ function activeTxns(k){ return txnsK(k).filter(t=>!t.pending); }
 function ccBal(k){
   const ts=activeTxns(k);
   const card=ts.filter(t=>!t.isInc&&t.method==='Card').reduce((s,t)=>s+t.amount,0);
-  const ccPay=ts.filter(t=>!t.isInc&&/cc\s*(bill|payment)/i.test(t.name)).reduce((s,t)=>s+t.amount,0);
+  const ccPay=ts.filter(t=>!t.isInc&&(t.isCCPayment||/cc\s*(bill|payment)/i.test(t.name))).reduce((s,t)=>s+t.amount,0);
   return Math.max(0,(S.carry[k]||0)+card-ccPay);
 }
 
@@ -583,6 +588,13 @@ function rCC(){
   if(el('d-bar')){el('d-bar').style.width=pct+'%';el('d-bar').style.background=col;}
   set('m-cs-lim',fmt(lim));set('m-cs-bal',fmt(bal));set('m-cs-avl',fmt(avl));
   if(el('m-bar')){el('m-bar').style.width=pct+'%';el('m-bar').style.background=col;}
+  set('d-carry-val',fmt(S.carry[k]||0));
+}
+
+function editCarry(){
+  const k=curK();
+  const v=prompt('Opening CC balance for '+MN[S.mo]+' '+S.yr+' ($):',(S.carry[k]||0).toFixed(2));
+  if(v!==null&&!isNaN(parseFloat(v))){S.carry[k]=parseFloat(v);render();}
 }
 
 function rWallets(){
@@ -715,11 +727,12 @@ function viewRowHTML(t,i,isInc){
   const col=isPend?'var(--amber)':isInc?'var(--grn)':t.method==='Card'?'var(--ow)':'var(--dim2)';
   const sgn=isInc?'+':'−';
   const dateStr=t.date?`<span class="tdate">${fmtDate(t.date)}</span>`:'';
+  const ccPayTag=t.isCCPayment?`<span style="color:var(--grn);font-weight:700">CC PAYMENT</span>`:'';
   const pendBadge=isPend?`<span class="badge bp">Pending</span>`:`<span class="badge ${isInc?'bi':t.method==='Card'?'bc':'bs'}">${t.method}</span>`;
   return`<div class="trow ${i%2===0?'ev':'od'}${isPend?' pending-row':''}" onclick="startEdit('${t.id}')">
     <div>
       <div class="tn${isPend?' pending-name':''}">${t.name}</div>
-      <div class="ts">${dateStr}<span>${t.category}</span></div>
+      <div class="ts">${dateStr}<span>${t.category}</span>${ccPayTag}</div>
     </div>
     ${pendBadge}
     <span class="ta${isPend?' pending-amt':''}" style="color:${col}">${sgn}${fmt(t.amount)}</span>
@@ -731,6 +744,12 @@ function editRowHTML(t,isInc){
   const catOpts=CATS.map(c=>`<option${c===t.category?' selected':''}>${c}</option>`).join('');
   const methOpts=(isInc?['Income']:['Card','Cash']).map(m=>`<option${m===t.method?' selected':''}>${m}</option>`).join('');
   const isPend=!!t.pending;
+  const isCCPay=!!t.isCCPayment;
+  const ccPayField=!isInc?`
+      <label class="pending-check-wrap" style="color:var(--grn)">
+        <input type="checkbox" id="ei-ccpay"${isCCPay?' checked':''}>
+        <span style="color:var(--grn)">CC Payment</span>
+      </label>`:'';
   return`<div class="trow-edit">
     <div class="edit-r1">
       <input class="efi" id="ei-name" value="${(t.name||'').replace(/"/g,'&quot;')}" placeholder="Description">
@@ -746,6 +765,7 @@ function editRowHTML(t,isInc){
         <input type="checkbox" id="ei-pend"${isPend?' checked':''}>
         <span>Pending</span>
       </label>
+      ${ccPayField}
       <button class="btn btn-g btn-xs" onclick="saveEdit('${t.id}')">Save</button>
       <button class="btn btn-xs" onclick="cancelEdit()">✕</button>
       <button class="btn btn-r btn-xs" onclick="delT('${t.id}')">Del</button>
@@ -765,11 +785,12 @@ function saveEdit(id){
   const meth=el('ei-meth')?.value;
   const date=el('ei-date')?.value||'';
   const pending=el('ei-pend')?.checked||false;
+  const isCCPayment=el('ei-ccpay')?.checked||false;
   if(!name||isNaN(amt)||amt<=0){cancelEdit();return;}
   const k=curK();
   const ts=S.txns[k]||[];
   const t=ts.find(t=>t.id===id);
-  if(t)Object.assign(t,{name,amount:amt,category:cat,method:meth,date,isInc:meth==='Income',pending});
+  if(t)Object.assign(t,{name,amount:amt,category:cat,method:meth,date,isInc:meth==='Income',pending,isCCPayment});
   editingId=null;render();
 }
 
