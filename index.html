@@ -70,6 +70,31 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 .pending-toggle.is-pending { background: var(--adim); border-color: var(--abdr); color: var(--amber); }
 .pending-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
+/* ── SUBSCRIPTIONS ── */
+#sb-subs { padding: 10px 12px; border-bottom: 1px solid var(--b); flex-shrink: 0; max-height: 220px; overflow-y: auto; }
+#sb-subs::-webkit-scrollbar { width: 2px; }
+#sb-subs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+.sub-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.sub-row { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; cursor: pointer; transition: background 0.12s; }
+.sub-row:last-child { margin-bottom: 0; }
+.sub-row.ev { background: rgba(0,0,0,0.12); }
+.sub-row.od { background: rgba(0,0,0,0.22); }
+.sub-row:hover { background: rgba(255,255,255,0.06) !important; }
+.sub-name { font-size: 11px; font-weight: 600; color: var(--w); }
+.sub-meta { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; display: flex; gap: 5px; }
+.sub-due-warn { color: var(--amber); font-weight: 700; }
+.sub-due-ok { color: var(--grn); }
+.sub-amt { font-size: 12px; font-weight: 800; color: var(--ow); white-space: nowrap; }
+.sub-method { font-size: 9px; padding: 1px 5px; border-radius: 10px; border: 1px solid; white-space: nowrap; }
+.sub-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--b); }
+.empty-s { font-size: 11px; color: var(--dim); font-weight: 500; text-align: center; padding: 8px; text-transform: uppercase; letter-spacing: 0.07em; }
+
+/* sub edit row */
+.sub-edit { background: rgba(0,0,0,0.38); border: 1px solid var(--b2); border-radius: 6px; padding: 8px; margin-bottom: 4px; }
+.sub-edit-r1 { display: grid; grid-template-columns: 1fr 70px; gap: 5px; margin-bottom: 5px; }
+.sub-edit-r2 { display: grid; grid-template-columns: 1fr 1fr 60px; gap: 5px; margin-bottom: 5px; }
+.sub-edit-r3 { display: flex; gap: 5px; }
+
 /* ── TICKER ── */
 #ticker { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 48px; background: var(--darker); border-bottom: 1px solid var(--b2); display: flex; align-items: center; overflow: hidden; }
 .t-brand { flex-shrink: 0; padding: 0 12px; height: 100%; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--b); background: var(--darker); z-index: 1; }
@@ -282,11 +307,11 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 
 <div id="ticker">
   <div class="t-brand">
-    <div class="t-brand-top">Ops</div>
-    <div class="t-brand-name">Budget</div>
+    <div class="t-brand-top">Budget</div>
+    <div class="t-brand-name">Info</div>
   </div>
   <div class="t-scroll">
-    <span class="t-inner">◈ Financial ops active &nbsp;·&nbsp; <b>CIMB World MC</b> &nbsp;·&nbsp; Aug pay early — <b>31 Jul</b> &nbsp;·&nbsp; <b>GSTV $450</b> Aug &nbsp;·&nbsp; <b>Cost-of-Living $500</b> Sep &nbsp;·&nbsp; Assurance $250 Dec &nbsp;&nbsp;</span>
+    <span class="t-inner" id="ticker-text">◈ Loading...</span>
   </div>
 </div>
 
@@ -338,6 +363,17 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
       <div class="wallet-total-row" id="d-wallet-total" style="display:none">
         <span class="wallet-total-lbl">Total Cash</span>
         <span class="wallet-total-val" id="d-wallet-total-val">$0</span>
+      </div>
+    </div>
+    <div id="sb-subs">
+      <div class="sub-hdr">
+        <span class="lbl">Subscriptions</span>
+        <button class="btn btn-xs btn-w" onclick="addSub()">+ Add</button>
+      </div>
+      <div id="d-sub-list"></div>
+      <div class="sub-total-row" id="d-sub-total" style="display:none">
+        <span class="lbl">Monthly total</span>
+        <span style="font-size:13px;font-weight:900;color:var(--ow)" id="d-sub-total-val">$0</span>
       </div>
     </div>
     <div id="sb-goals">
@@ -509,8 +545,11 @@ let S={
     {id:'w2',name:'OCBC',amount:0},
     {id:'w3',name:'Revolut',amount:0},
   ],
+  subs:[],
   goals:[], goalEditId:null
 };
+
+let editingSubId=null;
 
 const fmt=n=>'$'+Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const barC=p=>p>=85?'#ff4d4d':p>=65?'#ffaa00':'#00e87a';
@@ -578,7 +617,7 @@ function render(){
   set('d-cc-period',period);
   set('d-main-title','Transactions — '+period);
   buildGrids();updateSortUI();
-  rCC();rWallets();rGoals();rTxns();
+  rCC();rWallets();rSubs();rGoals();rTxns();rTicker();
 }
 
 function rCC(){
@@ -645,6 +684,126 @@ function addWallet(){
   setTimeout(()=>{const e=el('wn-'+editingWalletId);if(e){e.focus();e.select();}},30);
 }
 function removeWallet(id){S.wallets=S.wallets.filter(w=>w.id!==id);if(editingWalletId===id)editingWalletId=null;rWallets();}
+
+// ── SUBSCRIPTIONS ──
+function workingDaysBefore(day, month, year, n){
+  // Given billing day, return date n working days before (skipping weekends)
+  // SG public holidays simplified - just skip weekends for now
+  let d = new Date(year, month, day);
+  let count = 0;
+  while(count < n){
+    d.setDate(d.getDate()-1);
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) count++;
+  }
+  return d;
+}
+
+function subDueInfo(sub){
+  const now = new Date();
+  const yr = S.yr, mo = S.mo;
+  const billingDate = new Date(yr, mo, sub.billingDay);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysUntil = Math.round((billingDate - today) / 86400000);
+
+  let warn = null;
+  if(sub.method === 'Card'){
+    const payBy = workingDaysBefore(sub.billingDay, mo, yr, 4);
+    const daysUntilPayBy = Math.round((payBy - today) / 86400000);
+    const k = curK();
+    const bal = ccBal(k);
+    const avl = Math.max(0, S.ccLimit - bal);
+    // Only warn if available limit is less than 2x the sub amount
+    if(avl < sub.amount * 2){
+      if(daysUntilPayBy <= 0) warn = {text:'Pay CC now!', col:'var(--red)'};
+      else if(daysUntilPayBy <= 5) warn = {text:`Pay CC by ${payBy.getDate()} ${MS[payBy.getMonth()]}`, col:'var(--amber)'};
+    }
+  }
+  return {daysUntil, warn};
+}
+
+function rSubs(){
+  if(!S.subs) S.subs=[];
+  const subs=S.subs;
+  const dl=el('d-sub-list');
+  if(!dl) return;
+  if(!subs.length){ dl.innerHTML='<div class="empty-s">No subscriptions — add one</div>'; if(el('d-sub-total'))el('d-sub-total').style.display='none'; return; }
+
+  const monthlyTotal = subs.reduce((s,sub)=>{
+    if(sub.cycle==='monthly') return s+sub.amount;
+    if(sub.cycle==='quarterly') return s+(sub.amount/3);
+    if(sub.cycle==='annual') return s+(sub.amount/12);
+    return s+sub.amount;
+  },0);
+
+  dl.innerHTML = subs.map((sub,i)=>{
+    if(editingSubId===sub.id) return subEditHTML(sub);
+    const {daysUntil, warn} = subDueInfo(sub);
+    const dueStr = daysUntil < 0 ? 'Billed' : daysUntil === 0 ? 'Due today' : `Due in ${daysUntil}d`;
+    const dueCol = daysUntil <= 3 ? 'var(--amber)' : 'var(--grn)';
+    const mCol = sub.method==='Card'?'var(--ow)':'var(--dim2)';
+    const mBdr = sub.method==='Card'?'var(--b2)':'var(--b)';
+    return `<div class="sub-row ${i%2===0?'ev':'od'}" onclick="startSubEdit('${sub.id}')">
+      <div>
+        <div class="sub-name">${sub.name}</div>
+        <div class="sub-meta">
+          <span style="color:${dueCol}">${dueStr}</span>
+          <span>${sub.cycle}</span>
+          ${warn?`<span class="sub-due-warn">⚠ ${warn.text}</span>`:''}
+        </div>
+      </div>
+      <span class="sub-method" style="color:${mCol};border-color:${mBdr}">${sub.method}</span>
+      <span class="sub-amt">${fmt(sub.amount)}</span>
+    </div>`;
+  }).join('');
+
+  const tr=el('d-sub-total');
+  if(tr){ tr.style.display='flex'; set('d-sub-total-val',fmt(monthlyTotal)+'/mo'); }
+}
+
+function subEditHTML(sub){
+  const cycleOpts=['monthly','quarterly','annual'].map(c=>`<option${c===sub.cycle?' selected':''}>${c}</option>`).join('');
+  const methOpts=['Card','Cash'].map(m=>`<option${m===sub.method?' selected':''}>${m}</option>`).join('');
+  return`<div class="sub-edit">
+    <div class="sub-edit-r1">
+      <input class="efi" id="si-name" value="${(sub.name||'').replace(/"/g,'&quot;')}" placeholder="e.g. Netflix">
+      <input class="efi" id="si-amt" type="number" value="${sub.amount||''}" step="0.01" placeholder="Amount">
+    </div>
+    <div class="sub-edit-r2">
+      <select class="efi" id="si-cycle">${cycleOpts}</select>
+      <select class="efi" id="si-meth">${methOpts}</select>
+      <input class="efi" id="si-day" type="number" value="${sub.billingDay||1}" min="1" max="31" placeholder="Day">
+    </div>
+    <div class="sub-edit-r3">
+      <button class="btn btn-g btn-xs" onclick="saveSub('${sub.id}')">Save</button>
+      <button class="btn btn-xs" onclick="cancelSubEdit()">✕</button>
+      <button class="btn btn-r btn-xs" onclick="delSub('${sub.id}')">Del</button>
+    </div>
+  </div>`;
+}
+
+function startSubEdit(id){ editingSubId=id; rSubs(); setTimeout(()=>{const e=el('si-name');if(e){e.focus();e.select();}},30); }
+function cancelSubEdit(){ editingSubId=null; rSubs(); }
+function saveSub(id){
+  const name=el('si-name')?.value.trim();
+  const amount=parseFloat(el('si-amt')?.value);
+  const cycle=el('si-cycle')?.value;
+  const method=el('si-meth')?.value;
+  const billingDay=parseInt(el('si-day')?.value)||1;
+  if(!name||isNaN(amount)||amount<=0){ cancelSubEdit(); return; }
+  const sub=S.subs.find(s=>s.id===id);
+  if(sub) Object.assign(sub,{name,amount,cycle,method,billingDay});
+  editingSubId=null; render();
+}
+function addSub(){
+  if(!S.subs)S.subs=[];
+  const id='s'+Date.now();
+  S.subs.push({id,name:'',amount:0,cycle:'monthly',method:'Card',billingDay:1});
+  editingSubId=id;
+  rSubs();
+  setTimeout(()=>{const e=el('si-name');if(e){e.focus();e.select();}},30);
+}
+function delSub(id){ S.subs=S.subs.filter(s=>s.id!==id); editingSubId=null; render(); }
 
 function rGoals(){
   const dg=el('d-goals-list');
@@ -836,6 +995,56 @@ function editGoal(id){openGoal(id);}
 function delGoal(id){S.goals=S.goals.filter(g=>g.id!==id);render();}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editingId)cancelEdit();});
+
+// ── DYNAMIC TICKER ──
+function rTicker(){
+  const k=curK();
+  const ts=txnsK(k);
+  const active=activeTxns(k);
+
+  // CC info
+  const bal=ccBal(k), lim=S.ccLimit, avl=Math.max(0,lim-bal);
+
+  // Wallet total
+  const walletTotal=(S.wallets||[]).reduce((s,w)=>s+w.amount,0);
+
+  // Net position (active only)
+  const inc=active.filter(t=>t.isInc).reduce((s,t)=>s+t.amount,0);
+  const exp=active.filter(t=>!t.isInc).reduce((s,t)=>s+t.amount,0);
+  const net=inc-exp;
+
+  // Pending total
+  const pending=ts.filter(t=>t.pending).reduce((s,t)=>s+t.amount,0);
+
+  // Next subscription due
+  let nextSub='';
+  if(S.subs&&S.subs.length){
+    const now=new Date();
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const upcoming=S.subs.map(sub=>{
+      const d=new Date(S.yr,S.mo,sub.billingDay);
+      return{name:sub.name,days:Math.round((d-today)/86400000)};
+    }).filter(s=>s.days>=0).sort((a,b)=>a.days-b.days);
+    if(upcoming.length) nextSub=` &nbsp;·&nbsp; <b>Next sub:</b> ${upcoming[0].name} in ${upcoming[0].days}d`;
+  }
+
+  // Days to payday
+  const nextPay=new Date(S.yr,S.mo+1,1);
+  const today2=new Date();today2.setHours(0,0,0,0);
+  // if payday falls on weekend, move to Friday before
+  let payDay=new Date(nextPay);
+  while(payDay.getDay()===0||payDay.getDay()===6) payDay.setDate(payDay.getDate()-1);
+  const daysToPayday=Math.round((payDay-today2)/86400000);
+  const paydayStr=daysToPayday<=0?'Payday today!':daysToPayday===1?'Payday tomorrow':`Payday in ${daysToPayday}d`;
+
+  const netCol=net>=0?'#00e87a':'#ff4d4d';
+  const avlCol=avl<200?'#ff4d4d':avl<500?'#ffaa00':'#00e87a';
+
+  const text=`◈ <b style="color:#ffe600">CC:</b> ${fmt(bal)} balance &nbsp;·&nbsp; <b style="color:${avlCol}">${fmt(avl)} available</b> &nbsp;·&nbsp; <b style="color:#ffe600">Cash:</b> ${fmt(walletTotal)} &nbsp;·&nbsp; <b style="color:#ffe600">Net:</b> <b style="color:${netCol}">${net>=0?'+':''}${fmt(net)}</b>${pending>0?` &nbsp;·&nbsp; <b style="color:#ffaa00">${fmt(pending)} pending</b>`:''}${nextSub} &nbsp;·&nbsp; <b style="color:#ffe600">${paydayStr}</b> &nbsp;&nbsp;`;
+
+  const t=el('ticker-text');
+  if(t) t.innerHTML=text;
+}
 
 // ════════════════════════════════
 // SUPABASE PERSISTENCE
