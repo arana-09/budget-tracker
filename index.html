@@ -71,9 +71,7 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 .pending-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
 /* ── SUBSCRIPTIONS ── */
-#sb-subs { padding: 10px 12px; border-bottom: 1px solid var(--b); flex-shrink: 0; max-height: 220px; overflow-y: auto; }
-#sb-subs::-webkit-scrollbar { width: 2px; }
-#sb-subs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+#sb-subs { padding: 10px 12px; border-bottom: 1px solid var(--b); flex-shrink: 0; }
 .sub-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .sub-row { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; cursor: pointer; transition: background 0.12s; }
 .sub-row:last-child { margin-bottom: 0; }
@@ -81,19 +79,19 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 .sub-row.od { background: rgba(0,0,0,0.22); }
 .sub-row:hover { background: rgba(255,255,255,0.06) !important; }
 .sub-name { font-size: 11px; font-weight: 600; color: var(--w); }
-.sub-meta { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; display: flex; gap: 5px; }
+.sub-meta { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; display: flex; gap: 5px; flex-wrap: wrap; }
 .sub-due-warn { color: var(--amber); font-weight: 700; }
 .sub-due-ok { color: var(--grn); }
 .sub-amt { font-size: 12px; font-weight: 800; color: var(--ow); white-space: nowrap; }
 .sub-method { font-size: 9px; padding: 1px 5px; border-radius: 10px; border: 1px solid; white-space: nowrap; }
 .sub-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--b); }
 .empty-s { font-size: 11px; color: var(--dim); font-weight: 500; text-align: center; padding: 8px; text-transform: uppercase; letter-spacing: 0.07em; }
-
 /* sub edit row */
 .sub-edit { background: rgba(0,0,0,0.38); border: 1px solid var(--b2); border-radius: 6px; padding: 8px; margin-bottom: 4px; }
 .sub-edit-r1 { display: grid; grid-template-columns: 1fr 70px; gap: 5px; margin-bottom: 5px; }
-.sub-edit-r2 { display: grid; grid-template-columns: 1fr 1fr 60px; gap: 5px; margin-bottom: 5px; }
-.sub-edit-r3 { display: flex; gap: 5px; }
+.sub-edit-r2 { display: grid; grid-template-columns: 1fr 1fr 50px; gap: 5px; margin-bottom: 5px; }
+.sub-edit-r3 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px; }
+.sub-edit-r4 { display: flex; gap: 5px; }
 
 /* ── TICKER ── */
 #ticker { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 48px; background: var(--darker); border-bottom: 1px solid var(--b2); display: flex; align-items: center; overflow: hidden; }
@@ -109,7 +107,9 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 #app { position: fixed; top: 48px; left: 0; right: 0; bottom: 0; display: flex; }
 
 /* ════ SIDEBAR ════ */
-#sidebar { width: 280px; flex-shrink: 0; background: var(--dark); border-right: 1px solid var(--b); display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+#sidebar { width: 280px; flex-shrink: 0; background: var(--dark); border-right: 1px solid var(--b); display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; height: 100%; }
+#sidebar::-webkit-scrollbar { width: 2px; }
+#sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
 #sb-top { padding: 12px; border-bottom: 1px solid var(--b); flex-shrink: 0; }
 .sb-eyebrow { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--yel); margin-bottom: 2px; }
 .sb-title { font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--w); line-height: 1; }
@@ -158,9 +158,7 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
 .wallet-total-val { font-size: 15px; font-weight: 900; color: var(--grn); }
 .empty-w { font-size: 11px; color: var(--dim); font-weight: 500; text-align: center; padding: 8px; text-transform: uppercase; letter-spacing: 0.07em; }
 /* goals */
-#sb-goals { padding: 10px 12px; flex: 1; overflow-y: auto; min-height: 0; }
-#sb-goals::-webkit-scrollbar { width: 2px; }
-#sb-goals::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+#sb-goals { padding: 10px 12px; }
 .g-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .goal-card { background: var(--s2); border: 1px solid var(--b); border-radius: var(--r); padding: 9px 11px; margin-bottom: 7px; }
 .goal-card.done { border-color: var(--gbdr); }
@@ -344,15 +342,18 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
       </div>
       <div class="cc-stats">
         <div class="cs"><div class="cs-l">Limit</div><div class="cs-v" id="d-cs-lim">$1,000</div></div>
-        <div class="cs sr"><div class="cs-l">Balance</div><div class="cs-v" id="d-cs-bal">$0</div></div>
-        <div class="cs sg"><div class="cs-l">Available</div><div class="cs-v" id="d-cs-avl">$1,000</div></div>
+        <div class="cs sr" title="Click to edit" onclick="editCCStat('bal')" style="cursor:pointer">
+          <div class="cs-l">Balance <span style="opacity:0.5;font-size:8px">✎</span></div>
+          <div class="cs-v" id="d-cs-bal">$0</div>
+        </div>
+        <div class="cs sg" title="Click to edit" onclick="editCCStat('avl')" style="cursor:pointer">
+          <div class="cs-l">Available <span style="opacity:0.5;font-size:8px">✎</span></div>
+          <div class="cs-v" id="d-cs-avl">$1,000</div>
+        </div>
       </div>
       <div class="btrack"><div class="bfill" id="d-bar" style="width:0%"></div></div>
       <div class="blbls"><span>$0</span><span id="d-bar-lbl">$1,000 limit</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-        <span class="lbl" style="font-size:8px">Opening balance: <span id="d-carry-val" style="color:var(--ow)">$0</span></span>
-        <button class="btn btn-xs" onclick="editCarry()">Edit</button>
-      </div>
+      <div style="font-size:9px;color:var(--dim);margin-top:6px">Click Balance or Available to edit directly</div>
     </div>
     <div id="sb-wallets">
       <div class="w-hdr">
@@ -447,8 +448,8 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
       <div>
         <div class="mob-cc-stats">
           <div class="mcs"><div class="mcs-l">Limit</div><div class="mcs-v" id="m-cs-lim">$1,000</div></div>
-          <div class="mcs sr"><div class="mcs-l">Balance</div><div class="mcs-v" id="m-cs-bal">$0</div></div>
-          <div class="mcs sg"><div class="mcs-l">Available</div><div class="mcs-v" id="m-cs-avl">$1,000</div></div>
+          <div class="mcs sr" onclick="editCCStat('bal')" style="cursor:pointer"><div class="mcs-l">Balance ✎</div><div class="mcs-v" id="m-cs-bal">$0</div></div>
+          <div class="mcs sg" onclick="editCCStat('avl')" style="cursor:pointer"><div class="mcs-l">Available ✎</div><div class="mcs-v" id="m-cs-avl">$1,000</div></div>
         </div>
       </div>
       <div class="mob-cc-right">
@@ -457,7 +458,7 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
           <input class="mob-lim-in" type="number" id="m-lim-in" value="1000" oninput="updLim('m')">
         </div>
         <div class="btrack" style="width:70px"><div class="bfill" id="m-bar" style="width:0%"></div></div>
-        <button class="btn btn-xs" style="padding:2px 6px;font-size:8px" onclick="editCarry()">Edit Balance</button>
+        <span style="font-size:8px;color:var(--dim)">Tap bal/avl to edit</span>
       </div>
     </div>
     <div id="mob-goals">
@@ -539,6 +540,8 @@ let S={
   yr:2026, mo:6,
   ccLimit:1000,
   carry:{},
+  manualCC:{}, // {key: {bal, avl}} — direct overrides when set
+  adjustment:{},
   txns:{},
   wallets:[
     {id:'w1',name:'POSB',amount:0},
@@ -562,10 +565,19 @@ const txnsK=k=>S.txns[k]||[];
 function activeTxns(k){ return txnsK(k).filter(t=>!t.pending); }
 
 function ccBal(k){
+  // If user has manually set the balance, use that
+  if(S.manualCC&&S.manualCC[k]&&S.manualCC[k].bal!=null){
+    const bal=S.manualCC[k].bal;
+    const avl=S.manualCC[k].avl!=null?S.manualCC[k].avl:Math.max(0,S.ccLimit-bal);
+    return{bal,avl,manual:true};
+  }
+  // Otherwise calculate from transactions
   const ts=activeTxns(k);
   const card=ts.filter(t=>!t.isInc&&t.method==='Card').reduce((s,t)=>s+t.amount,0);
   const ccPay=ts.filter(t=>!t.isInc&&(t.isCCPayment||/cc\s*(bill|payment)/i.test(t.name))).reduce((s,t)=>s+t.amount,0);
-  return Math.max(0,(S.carry[k]||0)+card-ccPay);
+  const bal=Math.max(0,(S.carry[k]||0)+card-ccPay);
+  const adj=(S.adjustment&&S.adjustment[k])||0;
+  return{bal:Math.max(0,bal+adj),avl:Math.max(0,S.ccLimit-bal-adj),manual:false};
 }
 
 function chYear(d){S.yr+=d;render();}
@@ -621,19 +633,31 @@ function render(){
 }
 
 function rCC(){
-  const k=curK(),bal=ccBal(k),lim=S.ccLimit,avl=Math.max(0,lim-bal),pct=Math.min(100,(bal/lim)*100),col=barC(pct);
+  const k=curK();
+  const {bal,avl}=ccBal(k);
+  const lim=S.ccLimit,pct=Math.min(100,(bal/lim)*100),col=barC(pct);
   set('d-cs-lim',fmt(lim));set('d-cs-bal',fmt(bal));set('d-cs-avl',fmt(avl));
   set('d-bar-lbl',fmt(lim)+' limit');
   if(el('d-bar')){el('d-bar').style.width=pct+'%';el('d-bar').style.background=col;}
   set('m-cs-lim',fmt(lim));set('m-cs-bal',fmt(bal));set('m-cs-avl',fmt(avl));
   if(el('m-bar')){el('m-bar').style.width=pct+'%';el('m-bar').style.background=col;}
-  set('d-carry-val',fmt(S.carry[k]||0));
 }
 
-function editCarry(){
+function editCCStat(type){
   const k=curK();
-  const v=prompt('Opening CC balance for '+MN[S.mo]+' '+S.yr+' ($):',(S.carry[k]||0).toFixed(2));
-  if(v!==null&&!isNaN(parseFloat(v))){S.carry[k]=parseFloat(v);render();}
+  if(!S.manualCC)S.manualCC={};
+  if(!S.manualCC[k])S.manualCC[k]={};
+  const cur=type==='bal'?S.manualCC[k].bal:S.manualCC[k].avl;
+  const label=type==='bal'?'CC Balance':'CC Available';
+  const v=prompt(`Enter actual ${label} from your CIMB app ($):`, cur!=null?cur.toFixed(2):'');
+  if(v===null)return;
+  const num=parseFloat(v);
+  if(isNaN(num))return;
+  S.manualCC[k][type]=num;
+  // If setting balance, auto-calculate available (and vice versa) unless both are already set
+  if(type==='bal'&&S.manualCC[k].avl==null) S.manualCC[k].avl=Math.max(0,S.ccLimit-num);
+  if(type==='avl'&&S.manualCC[k].bal==null) S.manualCC[k].bal=Math.max(0,S.ccLimit-num);
+  rCC(); queueSave();
 }
 
 function rWallets(){
@@ -711,7 +735,7 @@ function subDueInfo(sub){
     const payBy = workingDaysBefore(sub.billingDay, mo, yr, 4);
     const daysUntilPayBy = Math.round((payBy - today) / 86400000);
     const k = curK();
-    const bal = ccBal(k);
+    const {bal} = ccBal(k);
     const avl = Math.max(0, S.ccLimit - bal);
     // Only warn if available limit is less than 2x the sub amount
     if(avl < sub.amount * 2){
@@ -743,13 +767,17 @@ function rSubs(){
     const dueCol = daysUntil <= 3 ? 'var(--amber)' : 'var(--grn)';
     const mCol = sub.method==='Card'?'var(--ow)':'var(--dim2)';
     const mBdr = sub.method==='Card'?'var(--b2)':'var(--b)';
+    const renewStr = sub.renewalDate ? `<span style="color:var(--dim2)">Renews ${fmtDate(sub.renewalDate)}</span>` : '';
+    const notesStr = sub.notes ? `<span style="color:var(--dim)">${sub.notes}</span>` : '';
     return `<div class="sub-row ${i%2===0?'ev':'od'}" onclick="startSubEdit('${sub.id}')">
       <div>
         <div class="sub-name">${sub.name}</div>
         <div class="sub-meta">
           <span style="color:${dueCol}">${dueStr}</span>
           <span>${sub.cycle}</span>
+          ${renewStr}
           ${warn?`<span class="sub-due-warn">⚠ ${warn.text}</span>`:''}
+          ${notesStr}
         </div>
       </div>
       <span class="sub-method" style="color:${mCol};border-color:${mBdr}">${sub.method}</span>
@@ -775,6 +803,16 @@ function subEditHTML(sub){
       <input class="efi" id="si-day" type="number" value="${sub.billingDay||1}" min="1" max="31" placeholder="Day">
     </div>
     <div class="sub-edit-r3">
+      <div>
+        <div class="lbl" style="margin-bottom:3px">Next renewal</div>
+        <input class="efi-date" id="si-renewal" type="date" value="${sub.renewalDate||''}">
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:3px">Notes</div>
+        <input class="efi" id="si-notes" value="${(sub.notes||'').replace(/"/g,'&quot;')}" placeholder="Optional">
+      </div>
+    </div>
+    <div class="sub-edit-r4">
       <button class="btn btn-g btn-xs" onclick="saveSub('${sub.id}')">Save</button>
       <button class="btn btn-xs" onclick="cancelSubEdit()">✕</button>
       <button class="btn btn-r btn-xs" onclick="delSub('${sub.id}')">Del</button>
@@ -790,9 +828,11 @@ function saveSub(id){
   const cycle=el('si-cycle')?.value;
   const method=el('si-meth')?.value;
   const billingDay=parseInt(el('si-day')?.value)||1;
+  const renewalDate=el('si-renewal')?.value||'';
+  const notes=el('si-notes')?.value.trim()||'';
   if(!name||isNaN(amount)||amount<=0){ cancelSubEdit(); return; }
   const sub=S.subs.find(s=>s.id===id);
-  if(sub) Object.assign(sub,{name,amount,cycle,method,billingDay});
+  if(sub) Object.assign(sub,{name,amount,cycle,method,billingDay,renewalDate,notes});
   editingSubId=null; render();
 }
 function addSub(){
@@ -1003,7 +1043,7 @@ function rTicker(){
   const active=activeTxns(k);
 
   // CC info
-  const bal=ccBal(k), lim=S.ccLimit, avl=Math.max(0,lim-bal);
+  const {bal,avl}=ccBal(k), lim=S.ccLimit;
 
   // Wallet total
   const walletTotal=(S.wallets||[]).reduce((s,w)=>s+w.amount,0);
