@@ -340,20 +340,14 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
           <input class="cc-lim-in" type="number" id="d-lim-in" value="1000" oninput="updLim('d')">
         </div>
       </div>
-      <div class="cc-stats">
-        <div class="cs"><div class="cs-l">Limit</div><div class="cs-v" id="d-cs-lim">$1,000</div></div>
-        <div class="cs sr" title="Click to edit" onclick="editCCStat('bal')" style="cursor:pointer">
-          <div class="cs-l">Balance <span style="opacity:0.5;font-size:8px">✎</span></div>
-          <div class="cs-v" id="d-cs-bal">$0</div>
-        </div>
-        <div class="cs sg" title="Click to edit" onclick="editCCStat('avl')" style="cursor:pointer">
-          <div class="cs-l">Available <span style="opacity:0.5;font-size:8px">✎</span></div>
-          <div class="cs-v" id="d-cs-avl">$1,000</div>
-        </div>
+      <div class="cc-stats" style="grid-template-columns:repeat(2,1fr)">
+        <div class="cs" style="cursor:pointer" title="Click to edit" onclick="editCCStat('lim')"><div class="cs-l">Limit <span style="opacity:0.5;font-size:8px">✎</span></div><div class="cs-v" id="d-cs-lim">$1,000</div></div>
+        <div class="cs" style="background:rgba(255,170,0,0.12);border-color:rgba(255,170,0,0.4);cursor:pointer" title="Click to edit" onclick="editCCStat('pend')"><div class="cs-l" style="color:var(--amber)">Pending <span style="opacity:0.5;font-size:8px">✎</span></div><div class="cs-v" id="d-cs-pend" style="color:var(--amber)">$0</div></div>
+        <div class="cs sr" style="cursor:pointer" title="Click to edit" onclick="editCCStat('bal')"><div class="cs-l">Balance <span style="opacity:0.5;font-size:8px">✎</span></div><div class="cs-v" id="d-cs-bal">$0</div></div>
+        <div class="cs sg" style="cursor:pointer" title="Click to edit" onclick="editCCStat('avl')"><div class="cs-l">Available <span style="opacity:0.5;font-size:8px">✎</span></div><div class="cs-v" id="d-cs-avl">$1,000</div></div>
       </div>
       <div class="btrack"><div class="bfill" id="d-bar" style="width:0%"></div></div>
       <div class="blbls"><span>$0</span><span id="d-bar-lbl">$1,000 limit</span></div>
-      <div style="font-size:9px;color:var(--dim);margin-top:6px">Click Balance or Available to edit directly</div>
     </div>
     <div id="sb-wallets">
       <div class="w-hdr">
@@ -369,11 +363,20 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
     <div id="sb-subs">
       <div class="sub-hdr">
         <span class="lbl">Subscriptions</span>
-        <button class="btn btn-xs btn-w" onclick="addSub()">+ Add</button>
+        <div style="display:flex;gap:4px;align-items:center">
+          <select id="sub-sort-sel" onchange="setSubSort(this.value)"
+            style="background:var(--s1);border:1px solid var(--b);border-radius:var(--r);color:var(--dim2);font-family:var(--font);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:4px 8px;cursor:pointer;-webkit-appearance:none">
+            <option value="due">Due date</option>
+            <option value="name">Name</option>
+            <option value="amount">Amount</option>
+            <option value="method">Method</option>
+          </select>
+          <button class="btn btn-xs btn-w" onclick="addSub()">+ Add</button>
+        </div>
       </div>
       <div id="d-sub-list"></div>
       <div class="sub-total-row" id="d-sub-total" style="display:none">
-        <span class="lbl">Monthly total</span>
+        <span class="lbl">Due this month</span>
         <span style="font-size:13px;font-weight:900;color:var(--ow)" id="d-sub-total-val">$0</span>
       </div>
     </div>
@@ -446,10 +449,11 @@ body { font-family: var(--font); background: var(--blue); color: var(--w); font-
     </div>
     <div id="mob-cc">
       <div>
-        <div class="mob-cc-stats">
-          <div class="mcs"><div class="mcs-l">Limit</div><div class="mcs-v" id="m-cs-lim">$1,000</div></div>
-          <div class="mcs sr" onclick="editCCStat('bal')" style="cursor:pointer"><div class="mcs-l">Balance ✎</div><div class="mcs-v" id="m-cs-bal">$0</div></div>
-          <div class="mcs sg" onclick="editCCStat('avl')" style="cursor:pointer"><div class="mcs-l">Available ✎</div><div class="mcs-v" id="m-cs-avl">$1,000</div></div>
+        <div class="mob-cc-stats" style="grid-template-columns:repeat(2,1fr)">
+          <div class="mcs" style="cursor:pointer" onclick="editCCStat('lim')"><div class="mcs-l">Limit ✎</div><div class="mcs-v" id="m-cs-lim">$1,000</div></div>
+          <div class="mcs" style="background:rgba(255,170,0,0.12);border-color:rgba(255,170,0,0.4);cursor:pointer" onclick="editCCStat('pend')"><div class="mcs-l" style="color:var(--amber)">Pending ✎</div><div class="mcs-v" id="m-cs-pend" style="color:var(--amber)">$0</div></div>
+          <div class="mcs sr" style="cursor:pointer" onclick="editCCStat('bal')"><div class="mcs-l">Balance ✎</div><div class="mcs-v" id="m-cs-bal">$0</div></div>
+          <div class="mcs sg" style="cursor:pointer" onclick="editCCStat('avl')"><div class="mcs-l">Available ✎</div><div class="mcs-v" id="m-cs-avl">$1,000</div></div>
         </div>
       </div>
       <div class="mob-cc-right">
@@ -553,6 +557,7 @@ let S={
 };
 
 let editingSubId=null;
+let subSortKey='due';
 
 const fmt=n=>'$'+Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const barC=p=>p>=85?'#ff4d4d':p>=65?'#ffaa00':'#00e87a';
@@ -565,19 +570,17 @@ const txnsK=k=>S.txns[k]||[];
 function activeTxns(k){ return txnsK(k).filter(t=>!t.pending); }
 
 function ccBal(k){
-  // If user has manually set the balance, use that
-  if(S.manualCC&&S.manualCC[k]&&S.manualCC[k].bal!=null){
-    const bal=S.manualCC[k].bal;
-    const avl=S.manualCC[k].avl!=null?S.manualCC[k].avl:Math.max(0,S.ccLimit-bal);
-    return{bal,avl,manual:true};
-  }
-  // Otherwise calculate from transactions
-  const ts=activeTxns(k);
-  const card=ts.filter(t=>!t.isInc&&t.method==='Card').reduce((s,t)=>s+t.amount,0);
-  const ccPay=ts.filter(t=>!t.isInc&&(t.isCCPayment||/cc\s*(bill|payment)/i.test(t.name))).reduce((s,t)=>s+t.amount,0);
+  const allTs=txnsK(k);
+  const active=allTs.filter(t=>!t.pending);
+  const pending=allTs.filter(t=>t.pending);
+  // Confirmed card charges
+  const card=active.filter(t=>!t.isInc&&t.method==='Card').reduce((s,t)=>s+t.amount,0);
+  const ccPay=active.filter(t=>!t.isInc&&(t.isCCPayment||/cc\s*(bill|payment)/i.test(t.name))).reduce((s,t)=>s+t.amount,0);
   const bal=Math.max(0,(S.carry[k]||0)+card-ccPay);
-  const adj=(S.adjustment&&S.adjustment[k])||0;
-  return{bal:Math.max(0,bal+adj),avl:Math.max(0,S.ccLimit-bal-adj),manual:false};
+  const avl=Math.max(0,S.ccLimit-bal);
+  // Pending card charges (not yet confirmed)
+  const pend=pending.filter(t=>!t.isInc&&t.method==='Card').reduce((s,t)=>s+t.amount,0);
+  return{bal,avl,pend};
 }
 
 function chYear(d){S.yr+=d;render();}
@@ -634,12 +637,17 @@ function render(){
 
 function rCC(){
   const k=curK();
-  const {bal,avl}=ccBal(k);
-  const lim=S.ccLimit,pct=Math.min(100,(bal/lim)*100),col=barC(pct);
-  set('d-cs-lim',fmt(lim));set('d-cs-bal',fmt(bal));set('d-cs-avl',fmt(avl));
+  const {bal:calcBal, avl:calcAvl, pend:calcPend}=ccBal(k);
+  const m=(S.manualCC&&S.manualCC[k])||{};
+  const bal = m.bal!=null ? m.bal : calcBal;
+  const avl = m.avl!=null ? m.avl : calcAvl;
+  const pend = m.pend!=null ? m.pend : calcPend;
+  const lim = S.ccLimit;
+  const pct=Math.min(100,(bal/lim)*100), col=barC(pct);
+  set('d-cs-lim',fmt(lim));set('d-cs-bal',fmt(bal));set('d-cs-avl',fmt(avl));set('d-cs-pend',fmt(pend));
   set('d-bar-lbl',fmt(lim)+' limit');
   if(el('d-bar')){el('d-bar').style.width=pct+'%';el('d-bar').style.background=col;}
-  set('m-cs-lim',fmt(lim));set('m-cs-bal',fmt(bal));set('m-cs-avl',fmt(avl));
+  set('m-cs-lim',fmt(lim));set('m-cs-bal',fmt(bal));set('m-cs-avl',fmt(avl));set('m-cs-pend',fmt(pend));
   if(el('m-bar')){el('m-bar').style.width=pct+'%';el('m-bar').style.background=col;}
 }
 
@@ -647,16 +655,19 @@ function editCCStat(type){
   const k=curK();
   if(!S.manualCC)S.manualCC={};
   if(!S.manualCC[k])S.manualCC[k]={};
-  const cur=type==='bal'?S.manualCC[k].bal:S.manualCC[k].avl;
-  const label=type==='bal'?'CC Balance':'CC Available';
-  const v=prompt(`Enter actual ${label} from your CIMB app ($):`, cur!=null?cur.toFixed(2):'');
-  if(v===null)return;
+  const labels={lim:'CC Limit',pend:'Pending charges',bal:'CC Balance',avl:'CC Available'};
+  const cur = type==='lim' ? S.ccLimit : S.manualCC[k][type]!=null ? S.manualCC[k][type] : null;
+  const v=prompt(`Enter actual ${labels[type]} from your CIMB app ($):`, cur!=null?cur.toFixed(2):'');
+  if(v===null) return;
   const num=parseFloat(v);
-  if(isNaN(num))return;
-  S.manualCC[k][type]=num;
-  // If setting balance, auto-calculate available (and vice versa) unless both are already set
-  if(type==='bal'&&S.manualCC[k].avl==null) S.manualCC[k].avl=Math.max(0,S.ccLimit-num);
-  if(type==='avl'&&S.manualCC[k].bal==null) S.manualCC[k].bal=Math.max(0,S.ccLimit-num);
+  if(isNaN(num)) return;
+  if(type==='lim'){
+    S.ccLimit=num;
+    const di=el('d-lim-in'); if(di) di.value=num;
+    const mi=el('m-lim-in'); if(mi) mi.value=num;
+  } else {
+    S.manualCC[k][type]=num;
+  }
   rCC(); queueSave();
 }
 
@@ -753,40 +764,77 @@ function rSubs(){
   if(!dl) return;
   if(!subs.length){ dl.innerHTML='<div class="empty-s">No subscriptions — add one</div>'; if(el('d-sub-total'))el('d-sub-total').style.display='none'; return; }
 
-  const monthlyTotal = subs.reduce((s,sub)=>{
+  // Sort
+  const sortBy=subSortKey||'due';
+  const sorted=[...subs].sort((a,b)=>{
+    if(sortBy==='name') return a.name.localeCompare(b.name);
+    if(sortBy==='amount') return b.amount-a.amount;
+    if(sortBy==='method') return a.method.localeCompare(b.method);
+    // due: sort by billingDay
+    return (a.billingDay||1)-(b.billingDay||1);
+  });
+
+  // Split active vs pending (paused)
+  const active=sorted.filter(s=>!s.paused);
+  const paused=sorted.filter(s=>s.paused);
+
+  // Monthly total = only subs due in current month (matching cycle)
+  const now=new Date(); const curMo=now.getMonth(), curYr=now.getFullYear();
+  const monthTotal=active.reduce((s,sub)=>{
+    if(sub.paused) return s;
     if(sub.cycle==='monthly') return s+sub.amount;
-    if(sub.cycle==='quarterly') return s+(sub.amount/3);
-    if(sub.cycle==='annual') return s+(sub.amount/12);
+    if(sub.cycle==='quarterly'){
+      // due this month if billingDay falls in current month and quarter aligns
+      // simplified: check if renewalDate month matches or no renewal date set
+      if(!sub.renewalDate) return s+(sub.amount/3); // fallback
+      const rd=new Date(sub.renewalDate);
+      if(rd.getMonth()===curMo&&rd.getFullYear()===curYr) return s+sub.amount;
+      return s;
+    }
+    if(sub.cycle==='annual'){
+      if(!sub.renewalDate) return s; // don't count if no renewal date
+      const rd=new Date(sub.renewalDate);
+      if(rd.getMonth()===curMo&&rd.getFullYear()===curYr) return s+sub.amount;
+      return s;
+    }
     return s+sub.amount;
   },0);
 
-  dl.innerHTML = subs.map((sub,i)=>{
+  const mkRow=(sub,i)=>{
     if(editingSubId===sub.id) return subEditHTML(sub);
     const {daysUntil, warn} = subDueInfo(sub);
-    const dueStr = daysUntil < 0 ? 'Billed' : daysUntil === 0 ? 'Due today' : `Due in ${daysUntil}d`;
-    const dueCol = daysUntil <= 3 ? 'var(--amber)' : 'var(--grn)';
+    const dueStr = sub.paused?'Paused':daysUntil < 0 ? 'Billed' : daysUntil === 0 ? 'Due today' : `Due in ${daysUntil}d`;
+    const dueCol = sub.paused?'var(--dim)':daysUntil <= 3 ? 'var(--amber)' : 'var(--grn)';
     const mCol = sub.method==='Card'?'var(--ow)':'var(--dim2)';
     const mBdr = sub.method==='Card'?'var(--b2)':'var(--b)';
     const renewStr = sub.renewalDate ? `<span style="color:var(--dim2)">Renews ${fmtDate(sub.renewalDate)}</span>` : '';
     const notesStr = sub.notes ? `<span style="color:var(--dim)">${sub.notes}</span>` : '';
-    return `<div class="sub-row ${i%2===0?'ev':'od'}" onclick="startSubEdit('${sub.id}')">
+    return `<div class="sub-row ${i%2===0?'ev':'od'}${sub.paused?' pending-row':''}" onclick="startSubEdit('${sub.id}')">
       <div>
         <div class="sub-name">${sub.name}</div>
         <div class="sub-meta">
           <span style="color:${dueCol}">${dueStr}</span>
           <span>${sub.cycle}</span>
           ${renewStr}
-          ${warn?`<span class="sub-due-warn">⚠ ${warn.text}</span>`:''}
+          ${warn&&!sub.paused?`<span class="sub-due-warn">⚠ ${warn.text}</span>`:''}
           ${notesStr}
         </div>
       </div>
       <span class="sub-method" style="color:${mCol};border-color:${mBdr}">${sub.method}</span>
       <span class="sub-amt">${fmt(sub.amount)}</span>
     </div>`;
-  }).join('');
+  };
 
+  let html=active.map((sub,i)=>mkRow(sub,i)).join('');
+
+  if(paused.length){
+    html+=`<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin:8px 0 4px;padding-top:8px;border-top:1px solid var(--b)">Paused / Inactive</div>`;
+    html+=paused.map((sub,i)=>mkRow(sub,i)).join('');
+  }
+
+  dl.innerHTML=html;
   const tr=el('d-sub-total');
-  if(tr){ tr.style.display='flex'; set('d-sub-total-val',fmt(monthlyTotal)+'/mo'); }
+  if(tr){ tr.style.display='flex'; set('d-sub-total-val',fmt(monthTotal)); }
 }
 
 function subEditHTML(sub){
@@ -812,6 +860,12 @@ function subEditHTML(sub){
         <input class="efi" id="si-notes" value="${(sub.notes||'').replace(/"/g,'&quot;')}" placeholder="Optional">
       </div>
     </div>
+    <div style="margin-bottom:5px">
+      <label class="pending-check-wrap">
+        <input type="checkbox" id="si-paused"${sub.paused?' checked':''}>
+        <span style="color:var(--dim2)">Paused / Inactive</span>
+      </label>
+    </div>
     <div class="sub-edit-r4">
       <button class="btn btn-g btn-xs" onclick="saveSub('${sub.id}')">Save</button>
       <button class="btn btn-xs" onclick="cancelSubEdit()">✕</button>
@@ -820,6 +874,7 @@ function subEditHTML(sub){
   </div>`;
 }
 
+function setSubSort(key){ subSortKey=key; rSubs(); }
 function startSubEdit(id){ editingSubId=id; rSubs(); setTimeout(()=>{const e=el('si-name');if(e){e.focus();e.select();}},30); }
 function cancelSubEdit(){ editingSubId=null; rSubs(); }
 function saveSub(id){
@@ -830,9 +885,10 @@ function saveSub(id){
   const billingDay=parseInt(el('si-day')?.value)||1;
   const renewalDate=el('si-renewal')?.value||'';
   const notes=el('si-notes')?.value.trim()||'';
+  const paused=el('si-paused')?.checked||false;
   if(!name||isNaN(amount)||amount<=0){ cancelSubEdit(); return; }
   const sub=S.subs.find(s=>s.id===id);
-  if(sub) Object.assign(sub,{name,amount,cycle,method,billingDay,renewalDate,notes});
+  if(sub) Object.assign(sub,{name,amount,cycle,method,billingDay,renewalDate,notes,paused});
   editingSubId=null; render();
 }
 function addSub(){
